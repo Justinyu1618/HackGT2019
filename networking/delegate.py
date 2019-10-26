@@ -7,7 +7,7 @@ class NetworkingDelegate(ABC):
         pass
 
     @abstractmethod
-    def received_data(self):
+    def received_data(self, name, data):
         pass
 
     @abstractmethod
