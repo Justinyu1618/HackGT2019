@@ -38,6 +38,10 @@ def start_server():
 def emit(name, data):
     sio.emit(name, data)
 
+def update_delegate(d):
+    global delegate
+    delegate = d
+
 def start(d):
     global delegate
     delegate = d

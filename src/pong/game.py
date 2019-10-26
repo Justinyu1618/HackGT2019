@@ -83,7 +83,8 @@ class Game():
 
     def run(self):
         self.window.clear()
-        self.sio.start(self.delegate)
+        #self.sio.start(self.delegate)
+        self.sio.update_delegate(self.delegate)
         while True:
             start_time = time.time()
             keys, c = set(), self.window.getch()

@@ -43,6 +43,7 @@ class Matchmaking:
         self.player_winds = {}
         self.add_player(Player(True))
 
+        self.host = match_code is None
         self.match_code = match_code
 
         delegate = MatchmakingDelegate(self.on_connect, self.on_receive_data)
@@ -58,10 +59,22 @@ class Matchmaking:
             self.sio.emit("match", {"code": self.match_code, "status": "join_match"})
 
     def on_receive_data(self, event, data):
-        if event == "match":
-            if data["code"] == self.match_code and data["status"] == "join_match":
+        if event == "match" and data["code"] == self.match_code:
+            if data["status"] == "join_match":
                 self.add_player(Player(False))
                 self.refresh()
+
+                self.sio.emit("match", {
+                    "code": self.match_code,
+                    "status": "players",
+                    "players": [i for i, _ in enumerate(self.players)]
+                })
+            elif data["status"] == "players":
+                self.players = [Player(False) for _ in data["players"]]
+                self.refresh()
+            elif data["status"] == "start":
+                game = Game(self.screen, self.sio, False)
+                game.run()
 
     def refresh(self):
         h, w = self.screen.getmaxyx()
@@ -71,7 +84,7 @@ class Matchmaking:
         self.player_wind.refresh()
         self.display_players()
 
-        if self.players[0].host:
+        if self.host:
             text = "Press (s) to start!"
         else:
             text = "Waiting for host to start..."
@@ -109,8 +122,12 @@ class Matchmaking:
             self.display_player(i)
 
     def handle_input(self, char):
-        if char == ord("n"):
-            self.add_player(Player(False))
+        print(char)
+        if char == ord("s") and self.host:
+            self.sio.emit("match", {"code": self.match_code, "status": "start"})
+
+            game = Game(self.screen, self.sio, True)
+            game.run()
 
     def run(self):
         while True:
