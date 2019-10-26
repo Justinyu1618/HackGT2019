@@ -49,6 +49,8 @@ class Matchmaking:
         delegate = MatchmakingDelegate(self.on_connect, self.on_receive_data)
         self.sio.start(delegate)
 
+        self.finished = False
+
     def on_connect(self):
         if self.match_code is None:
             match_code = str(uuid.uuid4())[:4]
@@ -77,6 +79,7 @@ class Matchmaking:
             elif data["status"] == "start":
                 game = Game(self.screen, self.sio, False, self.match_code)
                 game.run()
+                self.finished = True
 
     def refresh(self):
         h, w = self.screen.getmaxyx()
@@ -135,9 +138,13 @@ class Matchmaking:
 
             game = Game(self.screen, self.sio, True, self.match_code)
             game.run()
+            self.finished = True
 
     def run(self):
         while True:
             self.handle_input(self.screen.getch())
             self.refresh()
             self.sleep(50)
+
+            if self.finished:
+                break
