@@ -3,7 +3,7 @@ from .objects import Ball, Paddle, Score
 # from .networking import NetworkingDelegate
 
 TICKRATE = 20
-FREQ = 50
+FREQ = 5
 
 from abc import ABC, abstractmethod
 
@@ -43,19 +43,19 @@ class Game():
         self.window.nodelay(True)
         self.window.keypad(True)
         curses.cbreak()
+        curses.curs_set(0)
 
         max_y, max_x = self.window.getmaxyx()
 
         self.ball = Ball(2, 2)
         self.paddle1 = Paddle(0, 0, 10, [curses.KEY_LEFT, curses.KEY_RIGHT])
-        self.paddle2 = Paddle(0, max_y - 1, 10, [97, 100])
-
+        self.paddle2 = Paddle(0, max_y - 1, 10, [curses.KEY_LEFT, curses.KEY_RIGHT])
         self.scorex = 0
         self.scorey = 0
         self.score = Score(1, 1, "Score: 0:0")
         self.host = host
         self.delegate = PongDelegate(self.data_received)
-        self.opponent_data = []
+        self.opponent_data = None
         self.sio = sio
 
 
@@ -79,9 +79,10 @@ class Game():
         self.window.refresh()
 
     def data_received(self, data):
-        self.opponent_data.append(data)
+        self.opponent_data = data
 
     def run(self):
+        self.window.clear()
         self.sio.start(self.delegate)
         while True:
             start_time = time.time()
@@ -91,23 +92,29 @@ class Game():
                 c = self.window.getch()
             if self.host:
                 op_keys = set()
-                if self.opponent_data and 'keys' in self.opponent_data[0]:
-                    op_keys = set(self.opponent_data.pop(0)['keys'])
-                    self.opponent_keys = None
+                if self.opponent_data and 'keys' in self.opponent_data:
+                    op_keys = set(self.opponent_data['keys'])
+                    self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
                 self.sio.emit('data', {'state':{k:v.serialize() for k,v in game_state.items()}})
             else:
+                # self.print(str(len(self.opponent_data)))
                 self.sio.emit('data', {'keys': list(keys)})
-                if self.opponent_data and 'state' in self.opponent_data[0]:
-                    # self.print(str(self.opponent_data))
-                    self.render(self.opponent_data.pop(0)['state'], unserialize=True)
-                    # self.opponent_data = None
+                self.print(str(self.opponent_data))
+                if self.opponent_data and 'state' in self.opponent_data:
+                    
+                    self.render(self.opponent_data['state'], unserialize=True)
+                    self.opponent_data = None
                 else:
-                    self.print("BOOO")
+                    # msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
+                    # self.print(str(msg))
+                    pass
             curses.flushinp()
             # curses.napms(int(1000 / TICKRATE))
+            # self.print(str(time.time() - start_time))
             curses.napms(max(0,int(FREQ - (time.time() - start_time))))
+
         
     def print(self, msg):
         max_y, max_x = self.window.getmaxyx()
