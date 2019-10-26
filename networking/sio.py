@@ -6,45 +6,41 @@ import threading
 SOCKETIO_IP = "137.135.122.22"
 SOCKETIO_PORT = 5000
 
-loop = asyncio.new_event_loop()
-sio = socketio.AsyncClient()
+sio = socketio.Client()
 
 connected = False
 delegate = None
 
 @sio.event
-async def connect():
+def connect():
     connected = True
     delegate.connected()
 
 @sio.on("data")
-async def received_data(data):
-    delegate.received_data(data)
+def received_data(data):
+    if delegate.received_data is not None:
+        delegate.received_data("data", data)
+
+@sio.on("match")
+def received_match(data):
+    if delegate.received_data is not None:
+        delegate.received_data("match", data)
 
 @sio.event
-async def disconnect():
+def disconnect():
     connected = False
     delegate.disconnected()
 
-async def start_server():
-    await sio.connect("http://{}:{}".format(SOCKETIO_IP, SOCKETIO_PORT))
-    await sio.wait()
-
-async def async_emit(name, data):
-    await sio.emit(name, data)
+def start_server():
+    sio.connect("http://{}:{}".format(SOCKETIO_IP, SOCKETIO_PORT))
+    sio.wait()
 
 def emit(name, data):
-    # global loop
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(async_emit(name, data))
-
-def main(loop):
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(start_server())
+    sio.emit(name, data)
 
 def start(d):
     global delegate
     delegate = d
 
-    t = threading.Thread(target=main, args=(loop,))
+    t = threading.Thread(target=start_server)
     t.start()
