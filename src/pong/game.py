@@ -43,6 +43,7 @@ class Game():
         self.window.nodelay(True)
         self.window.keypad(True)
         curses.cbreak()
+        curses.curs_set(0)
 
         max_y, max_x = self.window.getmaxyx()
 
@@ -90,9 +91,9 @@ class Game():
                 c = self.window.getch()
             if self.host:
                 op_keys = set()
-                if self.opponent_data and 'keys' in self.opponent_data[0]:
-                    op_keys = set(self.opponent_data.pop(0)['keys'])
-                    self.opponent_keys = None
+                if self.opponent_data and 'keys' in self.opponent_data:
+                    op_keys = set(self.opponent_data['keys'])
+                    self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
                 self.sio.emit('data', {'state':{k:v.serialize() for k,v in game_state.items()}})
@@ -109,7 +110,7 @@ class Game():
                     pass
             curses.flushinp()
             # curses.napms(int(1000 / TICKRATE))
-            self.print(str(time.time() - start_time))
+            # self.print(str(time.time() - start_time))
             curses.napms(max(0,int(FREQ - (time.time() - start_time))))
 
         

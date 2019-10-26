@@ -8,14 +8,14 @@ class Movable():
 		self.vely = vely
 
 	def update(self, window):
-		new_x = self.x + self.velx 
+		new_x = self.x + self.velx
 		new_y = self.y + self.vely
 		max_y, max_x = window.getmaxyx()
 		self.x = max(0,min(max_x-1, new_x))
 		self.y = max(0,min(max_y-1, new_y))
 
 	def draw(self, window):
-		window.insch(self.y, self.x, "@")
+		window.insch(int(self.y), int(self.x), "@")
 
 	def serialize(self):
 		return {k:v for k, v in self.__dict__.items()}
@@ -26,7 +26,7 @@ class Movable():
 
 
 class Paddle(Movable):
-	def __init__(self, x, y, w, keys, VEL_X=1):
+	def __init__(self, x, y, w, keys, VEL_X=1.5):
 		super(Paddle, self).__init__(x, y)
 		self.w = w
 		self.k_l = keys[0]
@@ -38,11 +38,11 @@ class Paddle(Movable):
 		super(Paddle, self).update(window)
 
 	def draw(self, window):
-		window.insstr(self.y, self.x, "[" + ("=" * (self.w - 2)) + "]")
+		window.insstr(int(self.y), int(self.x), "[" + ("=" * (self.w - 2)) + "]")
 
 
 class Ball(Movable):
-	def __init__(self, x, y, velx=1, vely=1):
+	def __init__(self, x, y, velx=0.1, vely=0.1):
 		super(Ball, self).__init__(x, y, velx, vely)
 
 	def update(self, window, obstacles):
@@ -64,7 +64,7 @@ class Ball(Movable):
 		return ret 
 
 	def draw(self, window):
-		window.insch(self.y, self.x, "o")
+		window.insch(round(self.y), round(self.x), "o")
 
 class Score:
 	def __init__(self, x, y, text):
