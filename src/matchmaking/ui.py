@@ -140,6 +140,7 @@ class Matchmaking:
 
     def handle_input(self, char):
         if char == ord("s") and self.host:
+
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
 
             self.finished = True
@@ -149,7 +150,8 @@ class Matchmaking:
             game.run()
 
     def run(self):
+        self.refresh()
         while not self.finished:
             self.handle_input(self.screen.getch())
-            self.refresh()
-            self.sleep(50)
+            curses.napms(100)
+            # self.sleep(50)
