@@ -2,7 +2,6 @@ import random, curses, time
 from .objects import Ball, Paddle, Score
 # from .networking import NetworkingDelegate
 
-TICKRATE = 20
 FREQ = 33
 
 from abc import ABC, abstractmethod
@@ -102,8 +101,7 @@ class Game():
                 self.render(game_state)
                 self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}})
             else:
-                # self.print(str(len(self.opponent_data)))
-                #self.print(str(self.opponent_data))
+
                 if self.opponent_data and 'state' in self.opponent_data:
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
@@ -115,8 +113,6 @@ class Game():
                     pass
                 self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
             curses.flushinp()
-            # curses.napms(int(1000 / TICKRATE))
-            # self.print(str(time.time() - start_time))
             curses.napms(max(0,int(FREQ - (time.time() - start_time))))
 
         
