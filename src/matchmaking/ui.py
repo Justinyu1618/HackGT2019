@@ -29,7 +29,7 @@ class MatchmakingDelegate(NetworkingDelegate):
 
 class Matchmaking:
 
-    def __init__(self, stdscr, sio):
+    def __init__(self, stdscr, sio, match_code=None):
         self.sio = sio
 
         self.screen = stdscr
@@ -43,12 +43,25 @@ class Matchmaking:
         self.player_winds = {}
         self.add_player(Player(True))
 
-        delegate = MatchmakingDelegate(self.on_connect, None)
+        self.match_code = match_code
+
+        delegate = MatchmakingDelegate(self.on_connect, self.on_receive_data)
         self.sio.start(delegate)
 
     def on_connect(self):
-        match_code = str(uuid.uuid4())[:4]
-        self.sio.emit("match", {"code": match_code, "status": "new_match"})
+        if self.match_code is None:
+            match_code = str(uuid.uuid4())[:4]
+            self.match_code = match_code
+
+            self.sio.emit("match", {"code": match_code, "status": "new_match"})
+        else:
+            self.sio.emit("match", {"code": self.match_code, "status": "join_match"})
+
+    def on_receive_data(self, event, data):
+        if event == "match":
+            if data["code"] == self.match_code and data["status"] == "join_match":
+                self.add_player(Player(False))
+                self.refresh()
 
     def refresh(self):
         h, w = self.screen.getmaxyx()
