@@ -58,6 +58,8 @@ class Matchmaking:
         else:
             self.sio.emit("match", {"code": self.match_code, "status": "join_match"})
 
+        self.refresh()
+
     def on_receive_data(self, event, data):
         if event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
@@ -91,6 +93,12 @@ class Matchmaking:
 
         self.screen.addstr(5, (w - len(text)) // 2, text)
 
+        if self.match_code is not None:
+            text2 = "Match code: {}".format(self.match_code)
+            self.screen.addstr(6, (w - len(text2)) // 2, text2)
+
+        self.screen.refresh()
+
     def sleep(self, time):
         self.screen.timeout(time)
         self.screen.getch()
@@ -122,7 +130,6 @@ class Matchmaking:
             self.display_player(i)
 
     def handle_input(self, char):
-        print(char)
         if char == ord("s") and self.host:
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
 
