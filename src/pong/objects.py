@@ -26,7 +26,7 @@ class Movable():
 
 
 class Paddle(Movable):
-	def __init__(self, x, y, w, keys, VEL_X=3):
+	def __init__(self, x, y, w, keys, VEL_X=1):
 		super(Paddle, self).__init__(x, y)
 		self.w = w
 		self.k_l = keys[0]
