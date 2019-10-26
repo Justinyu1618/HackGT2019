@@ -3,7 +3,7 @@ from .objects import Ball, Paddle, Score
 # from .networking import NetworkingDelegate
 
 TICKRATE = 20
-FREQ = 5
+FREQ = 33
 
 from abc import ABC, abstractmethod
 
@@ -103,16 +103,17 @@ class Game():
                 self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}})
             else:
                 # self.print(str(len(self.opponent_data)))
-                self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
                 #self.print(str(self.opponent_data))
                 if self.opponent_data and 'state' in self.opponent_data:
-                    
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
                 else:
+                    game_state = self.update(keys, set())
+                    self.render(game_state)
                     # msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
                     # self.print(str(msg))
                     pass
+                self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
             curses.flushinp()
             # curses.napms(int(1000 / TICKRATE))
             # self.print(str(time.time() - start_time))
