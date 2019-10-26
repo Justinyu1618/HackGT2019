@@ -104,7 +104,8 @@ class Game():
                     self.render(self.opponent_data.pop(0)['state'], unserialize=True)
                     # self.opponent_data = None
                 else:
-                    self.print("BOOO")
+                    msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
+                    self.print(str(msg))
             curses.flushinp()
             # curses.napms(int(1000 / TICKRATE))
             curses.napms(max(0,int(FREQ - (time.time() - start_time))))
