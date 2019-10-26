@@ -2,7 +2,7 @@ import random, curses, time
 from .objects import Ball, Paddle, Score
 # from .networking import NetworkingDelegate
 
-FREQ = 33
+FREQ = 33   
 
 from abc import ABC, abstractmethod
 
@@ -37,8 +37,13 @@ class PongDelegate(NetworkingDelegate):
         pass
 
 class Game():
-    def __init__(self, window, sio, host, match_code):
-        self.window = window
+    def __init__(self, window, sio, host, match_code, size=None):
+        # window.box()
+        # window.refresh()
+        max_y, max_x = window.getmaxyx()
+        
+        self.window = window.derwin(size[1]-2, size[0]-2,1,1)
+        
         self.window.nodelay(True)
         self.window.keypad(True)
         curses.cbreak()
@@ -49,8 +54,8 @@ class Game():
         max_y, max_x = self.window.getmaxyx()
 
         self.ball = Ball(2, 2)
-        self.paddle1 = Paddle(0, 0, 10, [curses.KEY_LEFT, curses.KEY_RIGHT])
-        self.paddle2 = Paddle(0, max_y - 1, 10, [curses.KEY_LEFT, curses.KEY_RIGHT])
+        self.paddle1 = Paddle(0, 0, 15, [curses.KEY_LEFT, curses.KEY_RIGHT])
+        self.paddle2 = Paddle(0, max_y - 1, 15, [curses.KEY_LEFT, curses.KEY_RIGHT])
         self.scorex = 0
         self.scorey = 0
         self.score = Score(1, 1, "Score: 0:0")
@@ -58,6 +63,8 @@ class Game():
         self.delegate = PongDelegate(self.data_received)
         self.opponent_data = None
         self.sio = sio
+
+        self.print(str(size))
 
 
     def update(self, keys1, keys2):
@@ -73,7 +80,8 @@ class Game():
             for k,v in game_state.items():
                 getattr(self, k).populate(v)
                 game_state[k] = getattr(self, k)
-        self.window.clear()
+        self.window.erase()
+        self.window.box()
         draworder = sorted(game_state.values(), key=lambda o:o.x)
         for o in draworder:
             o.draw(self.window)
@@ -100,13 +108,14 @@ class Game():
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
-                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
+                # self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
-                if self.opponent_data and 'state' in self.opponent_data and self.opponent_data['timestep'] > timestep:
+                self.print(str(self.opponent_data))
+                if self.opponent_data and 'state' in self.opponent_data and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
                 else:
-                    game_state = self.update(keys, set())
+                    game_state = self.update(set(), keys)
                     self.render(game_state)
                     # msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
                     # self.print(str(msg))
