@@ -86,6 +86,7 @@ class Game():
         self.window.clear()
         #self.sio.start(self.delegate)
         self.sio.update_delegate(self.delegate)
+        timestep = 0
         while True:
             start_time = time.time()
             keys, c = set(), self.window.getch()
@@ -99,10 +100,9 @@ class Game():
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
-                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}})
+                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
-
-                if self.opponent_data and 'state' in self.opponent_data:
+                if self.opponent_data and 'state' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
                 else:
@@ -114,6 +114,7 @@ class Game():
                 self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
             curses.flushinp()
             curses.napms(max(0,int(FREQ - (time.time() - start_time))))
+            timestep += 1
 
         
     def print(self, msg):
