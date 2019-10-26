@@ -38,12 +38,14 @@ class PongDelegate(NetworkingDelegate):
         pass
 
 class Game():
-    def __init__(self, window, sio, host):
+    def __init__(self, window, sio, host, match_code):
         self.window = window
         self.window.nodelay(True)
         self.window.keypad(True)
         curses.cbreak()
         curses.curs_set(0)
+
+        self.match_code = match_code
 
         max_y, max_x = self.window.getmaxyx()
 
@@ -98,11 +100,11 @@ class Game():
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
-                self.sio.emit('data', {'state':{k:v.serialize() for k,v in game_state.items()}})
+                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}})
             else:
                 # self.print(str(len(self.opponent_data)))
-                self.sio.emit('data', {'keys': list(keys)})
-                self.print(str(self.opponent_data))
+                self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
+                #self.print(str(self.opponent_data))
                 if self.opponent_data and 'state' in self.opponent_data:
                     
                     self.render(self.opponent_data['state'], unserialize=True)

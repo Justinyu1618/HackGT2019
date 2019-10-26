@@ -73,7 +73,7 @@ class Matchmaking:
                 self.players = [Player(False) for _ in data["players"]]
                 self.refresh()
             elif data["status"] == "start":
-                game = Game(self.screen, self.sio, False)
+                game = Game(self.screen, self.sio, False, self.match_code)
                 game.run()
 
     def refresh(self):
@@ -126,7 +126,7 @@ class Matchmaking:
         if char == ord("s") and self.host:
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
 
-            game = Game(self.screen, self.sio, True)
+            game = Game(self.screen, self.sio, True, self.match_code)
             game.run()
 
     def run(self):
