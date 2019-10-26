@@ -59,7 +59,7 @@ class Ball(Movable):
 			ret = "top"
 			self.vely *= -1
 		for obstacle in obstacles:
-			if (self.x >= obstacle.x and self.x <= (obstacle.x + obstacle.w + 1)) and ((self.y >= (obstacle.y - 2)) and (self.y <= (obstacle.y + 2))):
+			if (self.x >= obstacle.x and self.x <= (obstacle.x + obstacle.w + 1)) and ((self.y >= (obstacle.y - 1)) and (self.y <= (obstacle.y + 1))):
 				self.vely *= -1
 		return ret 
 

@@ -39,11 +39,14 @@ class PongDelegate(NetworkingDelegate):
 class Game():
     def __init__(self, window, sio, host, match_code, size=None):
         # window.box()
-        # window.refresh()
-        max_y, max_x = window.getmaxyx()
-        
-        self.window = window.derwin(size[1]-2, size[0]-2,1,1)
-        
+        window.clear()
+        window.refresh()
+        bounding_wind = window.derwin(size[1], size[0],0,0)
+        bounding_wind.box()
+        bounding_wind.refresh()
+        max_y, max_x = bounding_wind.getmaxyx()
+        self.window = bounding_wind.derwin(max_y-2, max_x-2,1,1)
+
         self.window.nodelay(True)
         self.window.keypad(True)
         curses.cbreak()
@@ -81,7 +84,6 @@ class Game():
                 getattr(self, k).populate(v)
                 game_state[k] = getattr(self, k)
         self.window.erase()
-        self.window.box()
         draworder = sorted(game_state.values(), key=lambda o:o.x)
         for o in draworder:
             o.draw(self.window)
@@ -108,18 +110,18 @@ class Game():
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
-                # self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
+                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
-                self.print(str(self.opponent_data))
-                if self.opponent_data and 'state' in self.opponent_data and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
+                # self.print(str(self.opponent_data))
+                if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
-                else:
-                    game_state = self.update(set(), keys)
-                    self.render(game_state)
-                    # msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
-                    # self.print(str(msg))
-                    pass
+                # else:
+                #     game_state = self.update(set(), keys)
+                #     self.render(game_state)
+                #     # msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
+                #     # self.print(str(msg))
+                #     pass
                 self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
             curses.flushinp()
             curses.napms(max(0,int(FREQ - (time.time() - start_time))))

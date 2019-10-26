@@ -77,7 +77,7 @@ class Matchmaking:
                     "players": [i for i, _ in enumerate(self.players)]
                 })
                 self.match_size_x = min(self.match_size_x, data["size"][1])
-                self.match_size_y = min(self.match_size_y, data["size"][1])
+                self.match_size_y = min(self.match_size_y, data["size"][0])
             elif data["status"] == "players":
                 assert not self.host
                 self.players = [Player(False) for _ in data["players"]]
@@ -150,7 +150,5 @@ class Matchmaking:
         while not self.finished:
             self.handle_input(self.screen.getch())
             curses.napms(100)
-        self.player_wind.clear()
-        self.screen.clear()
         game = Game(self.screen, self.sio, self.host, self.match_code, (self.match_size_x, self.match_size_y))
         game.run()
