@@ -65,6 +65,7 @@ class Matchmaking:
     def on_receive_data(self, event, data):
         if event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
+                assert self.host
                 self.add_player(Player(False))
                 self.refresh()
 
@@ -74,14 +75,17 @@ class Matchmaking:
                     "players": [i for i, _ in enumerate(self.players)]
                 })
             elif data["status"] == "players":
+                assert not self.host
                 self.players = [Player(False) for _ in data["players"]]
                 self.refresh()
             elif data["status"] == "start":
-                game = Game(self.screen, self.sio, False, self.match_code)
-                game.run()
+                assert not self.host
                 self.finished = True
 
     def refresh(self):
+        if self.finished:
+            return
+
         h, w = self.screen.getmaxyx()
 
         self.player_wind.clear()
@@ -135,16 +139,13 @@ class Matchmaking:
     def handle_input(self, char):
         if char == ord("s") and self.host:
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
-
-            game = Game(self.screen, self.sio, True, self.match_code)
-            game.run()
             self.finished = True
 
     def run(self):
-        while True:
+        self.refresh()
+        while not self.finished:
             self.handle_input(self.screen.getch())
-            self.refresh()
-            self.sleep(50)
+            curses.napms(100)
 
-            if self.finished:
-                break
+        game = Game(self.screen, self.sio, self.host, self.match_code)
+        game.run()
