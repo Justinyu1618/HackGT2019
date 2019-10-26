@@ -58,7 +58,7 @@ def main(stdscr):
     # Display welcome screen and wait for key press
     win.clear()
     win.border()
-    win.addstr(ROWS / 2 - 2, (COLUMNS / 2 + 1) - len('PONGX') / 2, \
+    win.addstr(ROWS / 2 - 2, (COLUMNS / 2 + 1) - len('PONGX') // 2, \
                   'PONGX', curses.color_pair(3) | curses.A_BOLD)    
     win.refresh()    
     q = win.getch()    
