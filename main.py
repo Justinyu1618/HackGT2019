@@ -1,17 +1,20 @@
 from networking import sio
 from networking.delegate import NetworkingDelegate
 
-class PongDelegate(NetworkingDelegate):
+from src.pong.game import Game
+import curses, sys
 
-    def connected(self):
-        print("connected!")
-        pass
+def run_host(stdscr):
+    game = Game(stdscr, sio, host=True)
+    game.run()
 
-    def received_data(self, data):
-        pass
+def run_client(stdscr):
+    game = Game(stdscr, sio, host=False)
+    game.run()
 
-    def disconnected(self):
-        pass
 
-d = PongDelegate()
-sio.start(d)
+if __name__ == '__main__':
+    if sys.argv[1] == "host":
+        curses.wrapper(run_host)
+    elif sys.argv[1] == "client":
+        curses.wrapper(run_client)
