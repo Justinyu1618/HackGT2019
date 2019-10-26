@@ -49,7 +49,7 @@ class Game():
 
         self.ball = Ball(2, 2)
         self.paddle1 = Paddle(0, 0, 10, [curses.KEY_LEFT, curses.KEY_RIGHT])
-        self.paddle2 = Paddle(0, max_y - 1, 10, [97, 100])
+        self.paddle2 = Paddle(0, max_y - 1, 10, [curses.KEY_LEFT, curses.KEY_RIGHT])
         self.scorex = 0
         self.scorey = 0
         self.score = Score(1, 1, "Score: 0:0")
@@ -82,6 +82,7 @@ class Game():
         self.opponent_data = data
 
     def run(self):
+        self.window.clear()
         self.sio.start(self.delegate)
         while True:
             start_time = time.time()
@@ -100,8 +101,9 @@ class Game():
             else:
                 # self.print(str(len(self.opponent_data)))
                 self.sio.emit('data', {'keys': list(keys)})
+                self.print(str(self.opponent_data))
                 if self.opponent_data and 'state' in self.opponent_data:
-                    # self.print(str(self.opponent_data))
+                    
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
                 else:

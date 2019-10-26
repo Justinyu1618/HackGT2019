@@ -26,7 +26,7 @@ class Movable():
 
 
 class Paddle(Movable):
-	def __init__(self, x, y, w, keys, VEL_X=1.5):
+	def __init__(self, x, y, w, keys, VEL_X=2):
 		super(Paddle, self).__init__(x, y)
 		self.w = w
 		self.k_l = keys[0]
@@ -38,7 +38,7 @@ class Paddle(Movable):
 		super(Paddle, self).update(window)
 
 	def draw(self, window):
-		window.insstr(int(self.y), int(self.x), "[" + ("=" * (self.w - 2)) + "]")
+		window.insstr(round(self.y), round(self.x), "[" + ("=" * (self.w - 2)) + "]")
 
 
 class Ball(Movable):
