@@ -81,8 +81,6 @@ class Matchmaking:
             elif data["status"] == "start":
                 assert not self.host
                 self.finished = True
-                game = Game(self.screen, self.sio, False, self.match_code)
-                game.run()
 
     def refresh(self):
         if self.finished:
@@ -140,18 +138,14 @@ class Matchmaking:
 
     def handle_input(self, char):
         if char == ord("s") and self.host:
-
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
-
             self.finished = True
-            assert self.finished
-
-            game = Game(self.screen, self.sio, True, self.match_code)
-            game.run()
 
     def run(self):
         self.refresh()
         while not self.finished:
             self.handle_input(self.screen.getch())
             curses.napms(100)
-            # self.sleep(50)
+
+        game = Game(self.screen, self.sio, self.host, self.match_code)
+        game.run()
