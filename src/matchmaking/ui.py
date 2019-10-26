@@ -46,6 +46,8 @@ class Matchmaking:
         self.host = match_code is None
         self.match_code = match_code
 
+        self.match_size_y, self.match_size_x = self.screen.getmaxyx()
+
         delegate = MatchmakingDelegate(self.on_connect, self.on_receive_data)
         self.sio.start(delegate)
 
@@ -58,7 +60,7 @@ class Matchmaking:
 
             self.sio.emit("match", {"code": match_code, "status": "new_match"})
         else:
-            self.sio.emit("match", {"code": self.match_code, "status": "join_match"})
+            self.sio.emit("match", {"code": self.match_code, "status": "join_match", "size":(self.screen.getmaxyx())})
 
         self.refresh()
 
@@ -74,6 +76,8 @@ class Matchmaking:
                     "status": "players",
                     "players": [i for i, _ in enumerate(self.players)]
                 })
+                self.match_size_x = min(self.match_size_x, data["size"][1])
+                self.match_size_y = min(self.match_size_y, data["size"][1])
             elif data["status"] == "players":
                 assert not self.host
                 self.players = [Player(False) for _ in data["players"]]
@@ -146,6 +150,7 @@ class Matchmaking:
         while not self.finished:
             self.handle_input(self.screen.getch())
             curses.napms(100)
-
-        game = Game(self.screen, self.sio, self.host, self.match_code)
+        self.player_wind.clear()
+        self.screen.clear()
+        game = Game(self.screen, self.sio, self.host, self.match_code, (self.match_size_x, self.match_size_y))
         game.run()
