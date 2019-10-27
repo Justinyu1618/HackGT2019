@@ -24,8 +24,8 @@ class Game:
 
         max_y, max_x = self.window.getmaxyx()
 
-        self.car1 = Car(15, 15, 2)
-        self.car2 = Car(10, 10, 2)
+        self.car1 = Car(15, 15, 1, 2)
+        self.car2 = Car(10, 10, 2, 2)
         self.scorex = 0
         self.scorey = 0
         self.host = host
@@ -46,8 +46,8 @@ class Game:
         if self.finished:
             return None
 
-        self.window.addch(self.car1.y, self.car1.x, "+")
-        self.window.addch(self.car2.y, self.car2.x, "+")
+        self.window.addch(self.car1.y, self.car1.x, "+", curses.color_pair(1))
+        self.window.addch(self.car2.y, self.car2.x, "+", curses.color_pair(2))
 
         self.car1.update(self.window, keys1)
         self.car2.update(self.window, keys2)
