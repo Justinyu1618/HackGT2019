@@ -77,9 +77,9 @@ class Game:
             if self.cars[i].x < 0 or self.cars[i].x >= w or self.cars[i].y < 0 or \
                     self.cars[i].y >= h or chr(self.window.inch(self.cars[i].y,
                         self.cars[i].x)) != " ":
-                self.cars[i].dead = True
+                self.cars[self.players[i].sid].dead = True
 
-            if self.cars[i].dead:
+            if self.cars[self.players[i].sid].dead:
                 num_dead += 1
             else:
                 sid_winner = self.players[i].sid
@@ -132,8 +132,13 @@ class Game:
             if self.host:
                 op_keys = {}
                 for key in self.opponent_data:
+                    if self.cars[key].dead:
+                        continue
+
                     op_keys[key] = set(self.opponent_data[key]["keys"])
-                op_keys[self.sid] = keys
+
+                if not self.cars[self.sid].dead:
+                    op_keys[self.sid] = keys
                 self.opponent_data = {}
                 game_state = self.update(op_keys)
                 if game_state is not None:
