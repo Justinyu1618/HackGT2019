@@ -3,7 +3,7 @@ import uuid
 import curses
 
 from src.pong.game import Game
-from src.networking.btio import *
+from src.networking.btio import start
 from src.landing_art.pong.pong_host import *
 
 
@@ -28,6 +28,7 @@ class Matchmaking:
     def __init__(self, stdscr, btio, match_code=None):
         if match_code is None:
             self.match_code = str(uuid.uuid4())[:4]
+            print("MATCH CODE: ", self.match_code)
             self.host = True
         else:
             self.match_code = match_code
