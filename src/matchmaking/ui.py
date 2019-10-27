@@ -2,12 +2,12 @@ import sys
 import uuid
 import curses
 
-from src.pong.game import Game
+from src.tron.game import Game
 from src.networking.btio import bio, start
 from src.landing_art.pong.pong_host import *
 
 
-MAX_PLAYERS = 4
+MAX_PLAYERS = 2
 NAME = "rinik-T450s"
 
 
@@ -44,11 +44,6 @@ class Matchmaking:
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
         
         self.bio = bio
-        if match_code:
-            start("CLIENT", conn=self.on_connect, recv=self.on_receive_data, name=NAME)
-        else:
-            start("SERVER", conn=self.on_connect, recv=self.on_receive_data) 
-
         self.finished = False
         self.sid = None
 
@@ -111,7 +106,6 @@ class Matchmaking:
         curses.init_pair(2, curses.COLOR_GREEN, -1)
         curses.init_pair(3, curses.COLOR_YELLOW, -1)
         curses.init_pair(4, curses.COLOR_BLUE, -1)
-
         curses.init_pair(5, curses.COLOR_CYAN, -1)
         curses.init_pair(6, curses.COLOR_MAGENTA, -1)
 
@@ -133,8 +127,6 @@ class Matchmaking:
         AVATAR_X_POSITIONS = {
             1: [sw//2 - AVATAR_WIDTH//2],
             2: [sw//2 - AVATAR_WIDTH, sw//2],
-            3: [sw//2 - AVATAR_WIDTH - AVATAR_WIDTH//2, sw//2 - AVATAR_WIDTH//2, sw//2 + AVATAR_WIDTH//2],
-            4: [sw//2 - 2*AVATAR_WIDTH, sw//2 - AVATAR_WIDTH, sw//2, sw//2 + AVATAR_WIDTH],
         }
 
         motion = [4, 3]
@@ -142,7 +134,7 @@ class Matchmaking:
 
         game_code_msg = f'Game Code: {self.match_code}'
         start_msg = 'Press (s) to start!'
-        add_msg = f'More players can join! ({len(self.players)}/4)'
+        add_msg = f'More players can join! ({len(self.players)}/2)'
         full_msg = 'Lobby is full!'
 
         self.screen.addstr(sh//2 - 1, sw//2 - len(game_code_msg)//2, game_code_msg)
@@ -154,10 +146,10 @@ class Matchmaking:
         display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
         
         while 1:
-            add_msg = f'More players can join! ({len(self.players)}/4)'
-            if len(self.players) < 4:
+            add_msg = f'More players can join! ({len(self.players)}/2)'
+            if len(self.players) < 2:
                 self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, add_msg)
-            elif len(self.players) == 4:
+            elif len(self.players) == 2:
                 self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, " "*len(add_msg))
                 self.screen.addstr(sh//2 + 3, sw//2 - len(full_msg)//2, full_msg)
 
@@ -180,27 +172,21 @@ class Matchmaking:
                 display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 2, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
                 display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 2, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
 
-            if len(self.players) == 3:
-                display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 3, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 3, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar3, color = 3, num_players = 3, player = 3, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-
-            if len(self.players) == 4:
-                display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 4, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 4, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar3, color = 3, num_players = 4, player = 3, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar4, color = 4, num_players = 4, player = 4, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-
             self.handle_input(self.screen.getch())
             curses.napms(150)
             self.screen.refresh()
 
+            if self.host:
+                start("CLIENT", conn=self.on_connect, recv=self.on_receive_data, name=NAME)
+            else:
+                start("SERVER", conn=self.on_connect, recv=self.on_receive_data)
+
             if self.finished:
                 self.screen.erase()
-                #game = Game(self.screen, self.bio, self.host, self.match_code,
-                #        self.sid, self.players, (self.match_size_x, self.match_size_y))
                 game = Game(self.screen, self.bio, self.host, self.match_code,
-                        (self.match_size_x, self.match_size_y))
+                        self.sid, self.players, (self.match_size_x, self.match_size_y))
+                #game = Game(self.screen, self.bio, self.host, self.match_code,
+                #        (self.match_size_x, self.match_size_y))
                 game.run()
                 self.screen.erase()
                 update_callbacks(self.on_connect, self.on_receive_data)

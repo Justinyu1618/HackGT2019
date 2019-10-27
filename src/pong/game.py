@@ -81,7 +81,7 @@ class Game():
                 self.render(game_state)
                 self.bio.write('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
-                if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
+                if self.opponent_data and 'state' in self.opponent_data:
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
 

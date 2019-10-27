@@ -81,6 +81,7 @@ def client_init(server_name):
     """
     initialize client socket
     """
+    print("Connecting...")
     logger.debug("client initialization")
     
     server_address = None
@@ -138,8 +139,7 @@ def read_handler(socket, buf):
             if recv_data_callback is not None:
                 event = message["event"]
                 data = message["data"]
-                # hardcode sid
-                data["sid"] = 1
+                data["sid"] = 1  # hardcoded sid
                 recv_data_callback(event, data)
         except ValueError:
             logger.error("message must be json serialized")

@@ -1,13 +1,16 @@
-import curses
 import time
+import curses
 from threading import Timer
 
 from .objects import Car
+from src.networking.btio import *
+
 
 FREQ = 150
 
+
 class Game:
-    def __init__(self, window, sio, host, match_code, sid, players, size=None):
+    def __init__(self, window, bio, host, match_code, sid, players, size=None):
         window.clear()
         window.refresh()
         bounding_wind = window.derwin(size[1], size[0],0,0)
@@ -42,7 +45,7 @@ class Game:
         self.scorey = 0
         self.host = host
         self.opponent_data = {}
-        self.sio = sio
+        self.bio = bio
         self.game_over = False
         self.finished = False
 
@@ -100,8 +103,7 @@ class Game:
                 sid_winner = self.players[i].sid
 
         if num_dead >= len(self.players) - 1:
-            self.sio.emit("data", {"code": self.match_code, "winner":
-                sid_winner})
+            self.bio.write("data", {"code": self.match_code, "winner": sid_winner})
             self.display_winner(sid_winner)
 
         if self.finished:
@@ -151,7 +153,7 @@ class Game:
 
     def run(self):
         self.window.clear()
-        self.sio.update_callbacks(recv=self.data_received)
+        update_callbacks(recv=self.data_received)
         timestep = 0
 
         keys_event = {}
@@ -177,7 +179,7 @@ class Game:
                 game_state = self.update(op_keys)
                 if game_state is not None:
                     self.render(game_state)
-                    self.sio.emit('data', {
+                    self.bio.write('data', {
                         'code': self.match_code,
                         'state':{k: [x.serialize() for x in v] for k,v in game_state.items()},
                         'timestep':timestep
@@ -198,7 +200,7 @@ class Game:
                     }
 
                 if timestep % 20 == 0 and keys_event is not None:
-                    self.sio.emit('data', keys_event)
+                    self.bio.write('data', keys_event)
                     keys_event = None
 
             curses.flushinp()
