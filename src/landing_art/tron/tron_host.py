@@ -1,6 +1,6 @@
 import random, curses, time
 from curses import textpad
-from pics import *
+from .pics import *
 
 AVATAR_WIDTH = 10
 AVATAR_HEIGHT = 5 
@@ -164,4 +164,5 @@ def display_suit(stdscr, frame, sh, sw, suit, position):
       counter += 1
   stdscr.attroff(curses.color_pair(color))
 
-# curses.wrapper(main)
+if __name__ == '__main__':
+  curses.wrapper(main,1234)

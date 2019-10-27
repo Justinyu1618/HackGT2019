@@ -6,7 +6,8 @@ from .objects import Ball, Paddle, Score
 FREQ = 33   
 
 class Game():
-    def __init__(self, window, sio, host, match_code, size=None):
+    name = "Pong"
+    def __init__(self, window, sio, host, match_code, sid=None, players=None, size=None):
         window.clear()
         window.refresh()
         bounding_wind = window.derwin(size[1], size[0],0,0)

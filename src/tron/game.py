@@ -5,6 +5,7 @@ from threading import Timer
 from .objects import Car
 
 class Game:
+    name = "Tron"
     def __init__(self, window, sio, host, match_code, sid, players, size=None):
         window.clear()
         window.refresh()
@@ -35,7 +36,6 @@ class Game:
 
         if len(players) == 4:
             self.cars.append(Car(max_x - 10, 12, 4, 2))
-
         self.scorex = 0
         self.scorey = 0
         self.host = host

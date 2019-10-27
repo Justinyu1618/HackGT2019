@@ -4,6 +4,7 @@ from src.pong.game import Game
 import curses, sys, uuid
 
 from src.landing_art.pong.pong_host import *
+import src.landing_art.tron.tron_host as tron_host
 
 MAX_PLAYERS = 4
 
@@ -22,7 +23,7 @@ class Player:
 
 class Matchmaking:
 
-    def __init__(self, stdscr, sio, match_code=None):
+    def __init__(self, stdscr, sio, game, match_code=None):
         if match_code is None:
             self.match_code = str(uuid.uuid4())[:4]
             self.host = True
@@ -35,7 +36,7 @@ class Matchmaking:
         self.screen = stdscr
         self.H = curses.LINES
         self.W = curses.COLS
-
+        self.game = game
         self.players = []
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
@@ -97,110 +98,112 @@ class Matchmaking:
             self.finished = True
 
     def run(self):
-        curses.curs_set(0)
-        self.screen.nodelay(1)
-        self.screen.timeout(200)
-        sh, sw = self.screen.getmaxyx()
-        box = [[3, 3], [sh-3, sw-3]]
-        textpad.rectangle(self.screen, box[0][0], box[0][1], box[1][0], box[1][1])
+        if self.game.name == "Pong":
+            curses.curs_set(0)
+            self.screen.nodelay(1)
+            self.screen.timeout(200)
+            sh, sw = self.screen.getmaxyx()
+            box = [[3, 3], [sh-3, sw-3]]
+            textpad.rectangle(self.screen, box[0][0], box[0][1], box[1][0], box[1][1])
 
-        curses.use_default_colors()
-        curses.init_pair(1, curses.COLOR_RED, -1)
-        curses.init_pair(2, curses.COLOR_GREEN, -1)
-        curses.init_pair(3, curses.COLOR_YELLOW, -1)
-        curses.init_pair(4, curses.COLOR_BLUE, -1)
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_RED, -1)
+            curses.init_pair(2, curses.COLOR_GREEN, -1)
+            curses.init_pair(3, curses.COLOR_YELLOW, -1)
+            curses.init_pair(4, curses.COLOR_BLUE, -1)
 
-        curses.init_pair(5, curses.COLOR_CYAN, -1)
-        curses.init_pair(6, curses.COLOR_MAGENTA, -1)
+            curses.init_pair(5, curses.COLOR_CYAN, -1)
+            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
 
-        counter = 1
-        for line in art_lines:
-            self.screen.addstr(counter + 5, sw//2 - len(line)//2, line)
-            counter += 1
+            counter = 1
+            for line in art_lines:
+                self.screen.addstr(counter + 5, sw//2 - len(line)//2, line)
+                counter += 1
 
-        counter = 1
-        for instruc in instructions:
-            self.screen.addstr(counter + (sh - len(instructions) - 5), sw - len(instruc) - 5, instruc)
-            counter += 1
+            counter = 1
+            for instruc in instructions:
+                self.screen.addstr(counter + (sh - len(instructions) - 5), sw - len(instruc) - 5, instruc)
+                counter += 1
 
-        counter = 1
-        for instruc2 in instructions2:
-            self.screen.addstr(counter + (sh - len(instructions) - 2), len(instruc) - 10, instruc2)
-            counter += 1
+            counter = 1
+            for instruc2 in instructions2:
+                self.screen.addstr(counter + (sh - len(instructions) - 2), len(instruc) - 10, instruc2)
+                counter += 1
 
-        AVATAR_X_POSITIONS = {
-            1: [sw//2 - AVATAR_WIDTH//2],
-            2: [sw//2 - AVATAR_WIDTH, sw//2],
-            3: [sw//2 - AVATAR_WIDTH - AVATAR_WIDTH//2, sw//2 - AVATAR_WIDTH//2, sw//2 + AVATAR_WIDTH//2],
-            4: [sw//2 - 2*AVATAR_WIDTH, sw//2 - AVATAR_WIDTH, sw//2, sw//2 + AVATAR_WIDTH],
-        }
+            AVATAR_X_POSITIONS = {
+                1: [sw//2 - AVATAR_WIDTH//2],
+                2: [sw//2 - AVATAR_WIDTH, sw//2],
+                3: [sw//2 - AVATAR_WIDTH - AVATAR_WIDTH//2, sw//2 - AVATAR_WIDTH//2, sw//2 + AVATAR_WIDTH//2],
+                4: [sw//2 - 2*AVATAR_WIDTH, sw//2 - AVATAR_WIDTH, sw//2, sw//2 + AVATAR_WIDTH],
+            }
 
-        motion = [4, 3]
-        frame = 1
+            motion = [4, 3]
+            frame = 1
 
-        game_code_msg = f'Game Code: {self.match_code}'
-        start_msg = 'Press (s) to start!'
-        add_msg = f'More players can join! ({len(self.players)}/4)'
-        full_msg = 'Lobby is full!'
-
-        self.screen.addstr(sh//2 - 1, sw//2 - len(game_code_msg)//2, game_code_msg)
-        self.screen.addstr(sh//2 + 1, sw//2 - len(start_msg)//2, start_msg)
-
-        display_fire(self.screen, frame, sw, 'left')
-        display_fire(self.screen, frame, sw, 'right')
-
-        display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-        
-        while 1:
+            game_code_msg = f'Game Code: {self.match_code}'
+            start_msg = 'Press (s) to start!'
             add_msg = f'More players can join! ({len(self.players)}/4)'
-            if len(self.players) < 4:
-                self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, add_msg)
-            elif len(self.players) == 4:
-                self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, " "*len(add_msg))
-                self.screen.addstr(sh//2 + 3, sw//2 - len(full_msg)//2, full_msg)
+            full_msg = 'Lobby is full!'
 
-            if frame == 1:
-                frame = 0
-            elif frame == 0:
-                frame = 1
-
-            motion[0], motion[1] = motion[1], motion[0]
+            self.screen.addstr(sh//2 - 1, sw//2 - len(game_code_msg)//2, game_code_msg)
+            self.screen.addstr(sh//2 + 1, sw//2 - len(start_msg)//2, start_msg)
 
             display_fire(self.screen, frame, sw, 'left')
             display_fire(self.screen, frame, sw, 'right')
 
-            clear_avatars(self.screen, sh, sw)
-
-            if len(self.players) == 1:
-                display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+            display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
             
-            if len(self.players) == 2:
-                display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 2, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 2, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+            while 1:
+                add_msg = f'More players can join! ({len(self.players)}/4)'
+                if len(self.players) < 4:
+                    self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, add_msg)
+                elif len(self.players) == 4:
+                    self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, " "*len(add_msg))
+                    self.screen.addstr(sh//2 + 3, sw//2 - len(full_msg)//2, full_msg)
 
-            if len(self.players) == 3:
-                display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 3, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 3, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar3, color = 3, num_players = 3, player = 3, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                if frame == 1:
+                    frame = 0
+                elif frame == 0:
+                    frame = 1
 
-            if len(self.players) == 4:
-                display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 4, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 4, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar3, color = 3, num_players = 4, player = 3, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
-                display_avatar( self.screen, avatar = avatar4, color = 4, num_players = 4, player = 4, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                motion[0], motion[1] = motion[1], motion[0]
 
-            self.handle_input(self.screen.getch())
-            curses.napms(150)
-            self.screen.refresh()
+                display_fire(self.screen, frame, sw, 'left')
+                display_fire(self.screen, frame, sw, 'right')
 
-            if self.finished:
-                self.screen.erase()
-                game = Game(self.screen, self.sio, self.host, self.match_code,
-                        self.sid, self.players, (self.match_size_x, self.match_size_y))
-                game.run()
-                self.screen.erase()
-                self.sio.update_callbacks(self.on_connect, self.on_receive_data)
-                self.finished = False
-                break
+                clear_avatars(self.screen, sh, sw)
 
+                if len(self.players) == 1:
+                    display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                
+                if len(self.players) == 2:
+                    display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 2, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                    display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 2, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+
+                if len(self.players) == 3:
+                    display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 3, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                    display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 3, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                    display_avatar( self.screen, avatar = avatar3, color = 3, num_players = 3, player = 3, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+
+                if len(self.players) == 4:
+                    display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 4, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                    display_avatar( self.screen, avatar = avatar2, color = 2, num_players = 4, player = 2, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                    display_avatar( self.screen, avatar = avatar3, color = 3, num_players = 4, player = 3, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+                    display_avatar( self.screen, avatar = avatar4, color = 4, num_players = 4, player = 4, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
+        
+                self.handle_input(self.screen.getch())
+                curses.napms(150)
+                self.screen.refresh()
+
+                if self.finished:
+                    self.screen.erase()
+                    game = self.game(self.screen, self.sio, self.host, self.match_code,
+                            self.sid, self.players, (self.match_size_x, self.match_size_y))
+                    game.run()
+                    self.screen.erase()
+                    self.sio.update_callbacks(self.on_connect, self.on_receive_data)
+                    self.finished = False
+                    break
+        elif self.game.name == "Tron":
+            tron_host.main(self.screen, 1234)
         self.run()
