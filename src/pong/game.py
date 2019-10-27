@@ -67,9 +67,6 @@ class Game():
         self.opponent_data = None
         self.sio = sio
 
-        self.print(str(size))
-
-
     def update(self, keys1, keys2):
         hit_edge = self.ball.update(self.window, [self.paddle1, self.paddle2])
         self.score.update(hit_edge)
@@ -94,15 +91,16 @@ class Game():
 
     def run(self):
         self.window.clear()
-        #self.sio.start(self.delegate)
         self.sio.update_delegate(self.delegate)
         timestep = 0
+
         while True:
             start_time = time.time()
             keys, c = set(), self.window.getch()
-            while(c != -1):
+            while c != -1:
                 keys.add(c)
                 c = self.window.getch()
+
             if self.host:
                 op_keys = set()
                 if self.opponent_data and 'keys' in self.opponent_data:
@@ -112,30 +110,14 @@ class Game():
                 self.render(game_state)
                 self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
-                # self.print(str(self.opponent_data))
                 if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
-                # else:
-                #     game_state = self.update(set(), keys)
-                #     self.render(game_state)
-                #     # msg = "" if len(self.opponent_data)==0 else self.opponent_data[0]
-                #     # self.print(str(msg))
-                #     pass
+
                 self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
             curses.flushinp()
-            curses.napms(max(0,int(FREQ - (time.time() - start_time))))
+            
+            if self.host:
+                curses.napms(max(0,int(FREQ - (time.time() - start_time))))
+
             timestep += 1
-
-        
-    def print(self, msg):
-        max_y, max_x = self.window.getmaxyx()
-        self.window.addstr(int(max_y*3/8), max(0,int(max_x*1/2-len(msg)/2)), msg)
-        self.window.refresh()
-        
-# def main(stdscr):
-#     g = Game(stdscr, host=True)
-#     g.run()
-
-# if __name__ == '__main__':
-#     curses.wrapper(main)
