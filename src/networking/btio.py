@@ -121,7 +121,7 @@ def read_handler(socket, buf):
 
         try:
             message = json.loads(message)
-        except JSONDecodeError:
+        except ValueError:
             logging.error("message must be json serialized")
 
         # handle callback functions
