@@ -107,8 +107,11 @@ def main(stdscr):
   curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
   curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
 
-  curses.init_pair(5, curses.COLOR_CYAN, curses.COLOR_BLACK)
+  curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
   curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+
+  curses.init_pair(7, curses.COLOR_BLACK, curses.COLOR_WHITE)
+  curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)
 
   counter = 1
   for line in art_lines:
@@ -125,12 +128,6 @@ def main(stdscr):
     stdscr.addstr(counter + (sh - len(instructions) - 2), len(instruc) - 10, instruc2)
     counter += 1
 
-  start_msg = 'Press (s) to start!'
-  add_msg = 'Press (n/m) to add/minus players! (Max: 4)'
-
-  stdscr.addstr(sh//2 - 1, sw//2 - len(start_msg)//2, start_msg)
-  stdscr.addstr(sh//2 + 1, sw//2 - len(add_msg)//2, add_msg)
-
   AVATAR_X_POSITIONS = {
     1: [sw//2 - AVATAR_WIDTH//2],
     2: [sw//2 - AVATAR_WIDTH, sw//2],
@@ -142,20 +139,52 @@ def main(stdscr):
   motion = [4, 3]
   frame = 1
 
+  game_code_msg = 'Game Code:'
+  game_code_input = '____________________'
+  add_msg = f'More players can join! ({number_players}/4)'
+  full_msg = 'Lobby is full!'
+  
+  ready_msg = 'Ready!'
+  waiting_msg = 'Waiting for game to start...'
+  
+  user_code_input = ''
+  blank_cursor = ' '
+  joined = False
+
+  stdscr.addstr(sh//2 - 1, sw//2 - len(game_code_msg)//2, game_code_msg)
+  stdscr.addstr(sh//2 + 2, sw//2 - len(game_code_input)//2, game_code_input)
+
   display_fire(stdscr, frame, sw, 'left')
   display_fire(stdscr, frame, sw, 'right')
 
   display_avatar( stdscr, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
   
+  stdscr.refresh()
+
   while 1:
     key = stdscr.getch()
-    if key == ord('n') and number_players < 4:
-      number_players += 1
-    if key == ord('m') and number_players > 1:
-      number_players -= 1
-    if key == ord('s'):
+    if key == ord('6'):
+      stdscr.addstr(sh//2 + 1, sw//2 - 2, '6')
+    if key == ord('7'):
+      stdscr.addstr(sh//2 + 1, sw//2 - 1, '7')
+    if key == ord('d'):
+      stdscr.addstr(sh//2 + 1, sw//2, 'd')
+    if key == ord('b'):
+      stdscr.addstr(sh//2 + 1, sw//2 + 1, 'b')
+      joined = True
+    if key == ord('w'):
       break
     
+    if joined:
+      stdscr.addstr(sh//2 - 1, sw//2 - len(game_code_msg)//2, " "*len(game_code_msg))
+      stdscr.addstr(sh//2 + 1, sw//2 - 2, " "*4)
+      stdscr.addstr(sh//2 + 2, sw//2 - len(game_code_input)//2, " "*len(game_code_input))
+
+      stdscr.addstr(sh//2 - 1, sw//2 - len(ready_msg)//2, ready_msg)
+      stdscr.addstr(sh//2 + 1, sw//2 - len(waiting_msg)//2, waiting_msg)
+
+      number_players = 4
+
     if frame == 1:
       frame = 0
     elif frame == 0:
@@ -222,4 +251,13 @@ def display_fire(stdscr, fire_frame, sw, position):
       counter += 1
   stdscr.attroff(curses.color_pair(color))
 
+  # def display_input(stdscr, running_input, cursor_frame, sw):
+  #   stdscr.addstr(sh//2 + 1, sw//2 - len(running_input)//2 - 1, running_input)
+  #   if cursor_frame == 1:
+  #     color = 7
+  #   elif cursor_frame == 0:
+  #     color = 8
+  #   stdscr.attron(curses.color_pair(color))
+  #   stdscr.addstr(sh//2 + 1, sw//2 + len(running_input)//2 + 1, ' ')
+  #   stdscr.attroff(curses.color_pair(color))
 curses.wrapper(main)
