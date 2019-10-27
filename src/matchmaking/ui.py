@@ -5,6 +5,7 @@ from src.tron.game import Game as Tron
 import curses, sys, uuid
 
 from src.landing_art.pong.pong_host import *
+from src.landing_art.tron.tron_host import tron
 
 MAX_PLAYERS = 4
 
@@ -115,10 +116,20 @@ class Matchmaking:
         curses.init_pair(5, curses.COLOR_CYAN, -1)
         curses.init_pair(6, curses.COLOR_MAGENTA, -1)
 
-        counter = 1
-        for line in art_lines:
-            self.screen.addstr(counter + 5, sw//2 - len(line)//2, line)
-            counter += 1
+        curses.init_pair(9, curses.COLOR_CYAN, -1)
+
+        if self.game == "pong":
+            counter = 1
+            for line in art_lines:
+                self.screen.addstr(counter + 5, sw//2 - len(line)//2, line)
+                counter += 1
+        elif self.game == "tron":
+            self.screen.attron(curses.color_pair(9))
+            counter = 1
+            for line in tron:
+              self.screen.addstr(counter + 3, sw//2 - len(line)//2, line)
+              counter += 1
+            self.screen.attroff(curses.color_pair(9))
 
         counter = 1
         for instruc in instructions:
@@ -148,8 +159,8 @@ class Matchmaking:
         self.screen.addstr(sh//2 - 1, sw//2 - len(game_code_msg)//2, game_code_msg)
         self.screen.addstr(sh//2 + 1, sw//2 - len(start_msg)//2, start_msg)
 
-        display_fire(self.screen, frame, sw, 'left')
-        display_fire(self.screen, frame, sw, 'right')
+        display_fire(self.screen, frame, sw, 'left', (self.game == "tron") * 15)
+        display_fire(self.screen, frame, sw, 'right', (self.game == "tron") * 15)
 
         display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
         
@@ -167,9 +178,8 @@ class Matchmaking:
                 frame = 1
 
             motion[0], motion[1] = motion[1], motion[0]
-
-            display_fire(self.screen, frame, sw, 'left')
-            display_fire(self.screen, frame, sw, 'right')
+            display_fire(self.screen, frame, sw, 'left', (self.game == "tron") * 15)
+            display_fire(self.screen, frame, sw, 'right', (self.game == "tron") * 15)
 
             clear_avatars(self.screen, sh, sw)
 

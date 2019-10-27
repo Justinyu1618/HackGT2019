@@ -1,6 +1,6 @@
 import random, curses, time
 from curses import textpad
-from pics import *
+from .pics import *
 
 AVATAR_WIDTH = 10
 AVATAR_HEIGHT = 5 

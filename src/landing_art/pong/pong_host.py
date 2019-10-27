@@ -215,7 +215,7 @@ def display_avatar(stdscr, avatar, color, num_players, player, positions, sh, mo
     counter += 1
   stdscr.attroff(curses.color_pair(color))
   
-def display_fire(stdscr, fire_frame, sw, position):
+def display_fire(stdscr, fire_frame, sw, position, offset=0):
   if fire_frame == 0:
     color = 5
   elif fire_frame == 1:
@@ -224,10 +224,10 @@ def display_fire(stdscr, fire_frame, sw, position):
   counter = 1
   for line in fire[fire_frame]:
     if position == 'left':
-      stdscr.addstr(counter + 5, sw//6 - len(line)//2, line)
+      stdscr.addstr(counter + 5 + offset, sw//6 - len(line)//2, line)
       counter += 1
     else:
-      stdscr.addstr(counter + 5, 5*(sw//6) - len(line)//2, line)
+      stdscr.addstr(counter + 5 + offset, 5*(sw//6) - len(line)//2, line)
       counter += 1
   stdscr.attroff(curses.color_pair(color))
 
