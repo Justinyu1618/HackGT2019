@@ -99,13 +99,14 @@ class Matchmaking:
         box = [[3, 3], [sh-3, sw-3]]
         textpad.rectangle(self.screen, box[0][0], box[0][1], box[1][0], box[1][1])
 
-        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_RED, -1)
+        curses.init_pair(2, curses.COLOR_GREEN, -1)
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)
+        curses.init_pair(4, curses.COLOR_BLUE, -1)
 
-        curses.init_pair(5, curses.COLOR_CYAN, curses.COLOR_BLACK)
-        curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        curses.init_pair(5, curses.COLOR_CYAN, -1)
+        curses.init_pair(6, curses.COLOR_MAGENTA, -1)
 
         counter = 1
         for line in art_lines:
@@ -145,7 +146,7 @@ class Matchmaking:
 
         display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
         
-        while not self.finished:
+        while 1:
             add_msg = f'More players can join! ({len(self.players)}/4)'
             if len(self.players) < 4:
                 self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, add_msg)
@@ -187,6 +188,14 @@ class Matchmaking:
             curses.napms(150)
             self.screen.refresh()
 
-        game = Game(self.screen, self.sio, self.host, self.match_code,
-                self.sid, self.players, (self.match_size_x, self.match_size_y))
-        game.run()
+            if self.finished:
+                self.screen.erase()
+                game = Game(self.screen, self.sio, self.host, self.match_code,
+                        self.sid, self.players, (self.match_size_x, self.match_size_y))
+                game.run()
+                self.screen.erase()
+                self.sio.update_callbacks(self.on_connect, self.on_receive_data)
+                self.finished = False
+                break
+
+        self.run()

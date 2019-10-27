@@ -1,5 +1,6 @@
 import curses
 import time
+from threading import Timer
 
 from .objects import Car
 
@@ -42,7 +43,11 @@ class Game:
         self.host = host
         self.opponent_data = {}
         self.sio = sio
+        self.game_over = False
         self.finished = False
+
+    def set_finished(self):
+        self.finished = True
 
     def display_winner(self, sid):
         h, w = self.window.getmaxyx()
@@ -57,16 +62,26 @@ class Game:
 
         self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
+        self.game_over = True
+
+        t = Timer(3, self.set_finished)
+        t.start()
+
     def update(self, keys):
-        if self.finished:
+        if self.finished or self.game_over:
             return None
 
         for i in range(len(self.players)):
+            if self.cars[i].dead:
+                continue
+
             if self.players[i].sid not in keys:
                 keys[self.players[i].sid] = {}
 
-            self.window.addch(self.cars[i].y, self.cars[i].x, "+",
-                    curses.color_pair(1))
+            self.window.attron(curses.color_pair(i + 1))
+            self.window.addch(self.cars[i].y, self.cars[i].x, "+")
+            self.window.attroff(curses.color_pair(i + 1))
+
             self.cars[i].update(self.window, keys[self.players[i].sid])
 
         h, w = self.window.getmaxyx()
@@ -85,7 +100,6 @@ class Game:
                 sid_winner = self.players[i].sid
 
         if num_dead >= len(self.players) - 1:
-            self.finished = True
             self.sio.emit("data", {"code": self.match_code, "winner":
                 sid_winner})
             self.display_winner(sid_winner)
@@ -96,21 +110,31 @@ class Game:
         return {"cars": self.cars}
     
     def render(self, game_state, unserialize=False):
+        if self.game_over:
+            return
+
         if not self.host:
-            for car in self.cars:
+            for i, car in enumerate(self.cars):
+                if car.dead:
+                    continue
+
+                self.window.attron(curses.color_pair(i + 1))
                 self.window.addch(car.y, car.x, "+")
+                self.window.attroff(curses.color_pair(i + 1))
 
         if unserialize:
             cars = game_state["cars"]
             [self.cars[i].populate(cars[i]) for i in range(len(cars))]
             
             for o in self.cars:
+                if o.dead:
+                    continue
+
                 o.draw(self.window)
 
     def data_received(self, event, data):
         if event == "data":
             if "winner" in data:
-                self.finished = True
                 self.display_winner(data["winner"])
             else:
                 self.opponent_data[data["sid"]] = data
@@ -132,7 +156,7 @@ class Game:
 
         keys_event = {}
 
-        while True:
+        while not self.finished:
             start_time = time.time()
             keys, c = set(), self.window.getch()
             while c != -1:
