@@ -42,7 +42,7 @@ class Paddle(Movable):
 
 
 class Ball(Movable):
-	def __init__(self, x, y, velx=0.1, vely=0.1):
+	def __init__(self, x, y, velx=0.5, vely=0.5):
 		super(Ball, self).__init__(x, y, velx, vely)
 
 	def update(self, window, obstacles):
@@ -59,7 +59,7 @@ class Ball(Movable):
 			ret = "top"
 			self.vely *= -1
 		for obstacle in obstacles:
-			if (self.x >= obstacle.x and self.x <= (obstacle.x + obstacle.w + 1)) and ((self.vely == 1 and self.y == (obstacle.y - 1)) or (self.vely == -1 and self.y == (obstacle.y + 1))):
+			if (self.x >= obstacle.x and self.x <= (obstacle.x + obstacle.w + 1)) and ((self.y >= (obstacle.y - 1)) and (self.y <= (obstacle.y + 1))):
 				self.vely *= -1
 		return ret 
 

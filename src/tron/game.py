@@ -1,11 +1,11 @@
 import curses
 import time
 
-from .objects import Ball, Paddle, Score
+from .objects import Car
 
-FREQ = 33   
+FREQ = 200
 
-class Game():
+class Game:
     def __init__(self, window, sio, host, match_code, size=None):
         window.clear()
         window.refresh()
@@ -24,34 +24,32 @@ class Game():
 
         max_y, max_x = self.window.getmaxyx()
 
-        self.ball = Ball(2, 2)
-        self.paddle1 = Paddle(0, 0, 15, [curses.KEY_LEFT, curses.KEY_RIGHT])
-        self.paddle2 = Paddle(0, max_y - 1, 15, [curses.KEY_LEFT, curses.KEY_RIGHT])
+        self.car1 = Car(15, 15, 2)
+        self.car2 = Car(10, 10, 2)
         self.scorex = 0
         self.scorey = 0
-        self.score = Score(1, 1, "Score: 0:0")
+        #self.score = Score(1, 1, "Score: 0:0")
         self.host = host
         self.opponent_data = None
         self.sio = sio
 
     def update(self, keys1, keys2):
-        hit_edge = self.ball.update(self.window, [self.paddle1, self.paddle2])
-        self.score.update(hit_edge)
-        self.paddle1.update(self.window, keys1)
-        self.paddle2.update(self.window, keys2)
+        self.car1.update(self.window, keys1)
+        self.car2.update(self.window, keys2)
 
-        return {'score':self.score, 'ball':self.ball, 'paddle1':self.paddle1, 'paddle2':self.paddle2}
+        return {
+            "car1": self.car1,
+            "car2": self.car2
+        }
     
     def render(self, game_state, unserialize=False):
         if unserialize:
             for k,v in game_state.items():
                 getattr(self, k).populate(v)
                 game_state[k] = getattr(self, k)
-        self.window.erase()
-        draworder = sorted(game_state.values(), key=lambda o:o.x)
+        draworder = sorted(game_state.values(), key=lambda o: o.x)
         for o in draworder:
             o.draw(self.window)
-        self.window.refresh()
 
     def data_received(self, event, data):
         if event == "data":

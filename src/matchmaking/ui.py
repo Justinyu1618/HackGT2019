@@ -1,7 +1,6 @@
 from networking import sio
-from networking.delegate import NetworkingDelegate
 
-from src.pong.game import Game
+from src.tron.game import Game
 import curses, sys, uuid
 
 MAX_PLAYERS = 4
@@ -10,22 +9,6 @@ class Player:
 
     def __init__(self, host):
         self.host = host
-
-class MatchmakingDelegate(NetworkingDelegate):
-
-    def __init__(self, connected, data):
-        self.connected = connected
-        self.received_data = data
-
-    def connected(self):
-        pass
-
-    def received_data(self, event, data):
-        if event == "match":
-            pass
-
-    def disconnected(self):
-        pass
 
 class Matchmaking:
 
@@ -46,8 +29,9 @@ class Matchmaking:
         self.host = match_code is None
         self.match_code = match_code
 
-        delegate = MatchmakingDelegate(self.on_connect, self.on_receive_data)
-        self.sio.start(delegate)
+        self.match_size_y, self.match_size_x = self.screen.getmaxyx()
+
+        self.sio.start(self.on_connect, self.on_receive_data)
 
         self.finished = False
 
@@ -58,13 +42,14 @@ class Matchmaking:
 
             self.sio.emit("match", {"code": match_code, "status": "new_match"})
         else:
-            self.sio.emit("match", {"code": self.match_code, "status": "join_match"})
+            self.sio.emit("match", {"code": self.match_code, "status": "join_match", "size":(self.screen.getmaxyx())})
 
         self.refresh()
 
     def on_receive_data(self, event, data):
         if event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
+                assert self.host
                 self.add_player(Player(False))
                 self.refresh()
 
@@ -73,15 +58,20 @@ class Matchmaking:
                     "status": "players",
                     "players": [i for i, _ in enumerate(self.players)]
                 })
+                self.match_size_x = min(self.match_size_x, data["size"][1])
+                self.match_size_y = min(self.match_size_y, data["size"][0])
             elif data["status"] == "players":
+                assert not self.host
                 self.players = [Player(False) for _ in data["players"]]
                 self.refresh()
             elif data["status"] == "start":
-                game = Game(self.screen, self.sio, False, self.match_code)
-                game.run()
+                assert not self.host
                 self.finished = True
 
     def refresh(self):
+        if self.finished:
+            return
+
         h, w = self.screen.getmaxyx()
 
         self.player_wind.clear()
@@ -135,16 +125,12 @@ class Matchmaking:
     def handle_input(self, char):
         if char == ord("s") and self.host:
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
-
-            game = Game(self.screen, self.sio, True, self.match_code)
-            game.run()
             self.finished = True
 
     def run(self):
-        while True:
+        self.refresh()
+        while not self.finished:
             self.handle_input(self.screen.getch())
-            self.refresh()
-            self.sleep(50)
-
-            if self.finished:
-                break
+            curses.napms(100)
+        game = Game(self.screen, self.sio, self.host, self.match_code, (self.match_size_x, self.match_size_y))
+        game.run()
