@@ -32,10 +32,44 @@ class Game:
         self.host = host
         self.opponent_data = None
         self.sio = sio
+        self.finished = False
 
     def update(self, keys1, keys2):
+        if self.finished:
+            return None
+
+        self.window.addch(self.car1.y, self.car1.x, "+")
+        self.window.addch(self.car2.y, self.car2.x, "+")
+
         self.car1.update(self.window, keys1)
         self.car2.update(self.window, keys2)
+
+        h, w = self.window.getmaxyx()
+
+        if self.car1.x < 0 or self.car1.x >= w or self.car1.y < 0 or \
+                self.car1.y >= h or chr(self.window.inch(self.car1.y,
+                    self.car1.x)) != " ":
+            line1 = "GAME OVER"
+            self.window.insstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
+
+            line2 = "PLAYER 2 WINS"
+            self.window.insstr(h // 2, (w - len(line2)) // 2 - 1, line2)
+
+            self.finished = True
+
+        if self.car2.x < 0 or self.car2.x >= w or self.car2.y < 0 or \
+                self.car2.y >= h or chr(self.window.inch(self.car2.y,
+                    self.car2.x)) != " ":
+            line1 = "GAME OVER"
+            self.window.insstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
+
+            line2 = "PLAYER 1 WINS"
+            self.window.insstr(h // 2, (w - len(line2)) // 2 - 1, line2)
+
+            self.finished = True
+
+        if self.finished:
+            return None
 
         return {
             "car1": self.car1,
@@ -75,8 +109,9 @@ class Game:
                     op_keys = set(self.opponent_data['keys'])
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
-                self.render(game_state)
-                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
+                if game_state is not None:
+                    self.render(game_state)
+                    self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
                 if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
