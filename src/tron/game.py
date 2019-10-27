@@ -50,10 +50,10 @@ class Game:
                 self.car1.y >= h or chr(self.window.inch(self.car1.y,
                     self.car1.x)) != " ":
             line1 = "GAME OVER"
-            self.window.insstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
+            self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
 
             line2 = "PLAYER 2 WINS"
-            self.window.insstr(h // 2, (w - len(line2)) // 2 - 1, line2)
+            self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
             self.finished = True
 
@@ -61,10 +61,10 @@ class Game:
                 self.car2.y >= h or chr(self.window.inch(self.car2.y,
                     self.car2.x)) != " ":
             line1 = "GAME OVER"
-            self.window.insstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
+            self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
 
             line2 = "PLAYER 1 WINS"
-            self.window.insstr(h // 2, (w - len(line2)) // 2 - 1, line2)
+            self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
             self.finished = True
 
