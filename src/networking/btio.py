@@ -134,7 +134,7 @@ def read_handler(socket, buf):
     socket.close()
 
 
-def socket_init(socket_class, name=None):
+def start_server(socket_class, name=None):
     """
     initializes server/client sockets
     socket_class = SERVER or CLIENT
@@ -171,3 +171,10 @@ def socket_init(socket_class, name=None):
         t.start()
 
     return bio
+
+
+def start(socket_class, conn=None, recv=None, name=None):
+    update_callbacks(conn=conn, recv=recv)
+    bio = start_server(socket_class, name=name)
+    return bio
+
