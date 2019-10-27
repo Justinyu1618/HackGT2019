@@ -27,7 +27,7 @@ class Car:
             self.y += 1
 
     def draw(self, window):
-        window.insch(self.y, self.x, "%")
+        window.addch(self.y, self.x, "%")
 
     def serialize(self):
         return {k: v for k, v in self.__dict__.items()}
