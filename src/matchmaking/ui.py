@@ -2,7 +2,7 @@ import sys
 import uuid
 import curses
 
-from src.tron.game import Game
+from src.pong.game import Game
 from src.networking.btio import bio, start
 from src.landing_art.pong.pong_host import *
 
@@ -187,10 +187,10 @@ class Matchmaking:
 
             if self.finished:
                 self.screen.erase()
-                game = Game(self.screen, self.bio, self.host, self.match_code,
-                        self.sid, self.players, (self.match_size_x, self.match_size_y))
                 #game = Game(self.screen, self.bio, self.host, self.match_code,
-                #        (self.match_size_x, self.match_size_y))
+                #        self.sid, self.players, (self.match_size_x, self.match_size_y))
+                game = Game(self.screen, self.bio, self.host, self.match_code,
+                        (self.match_size_x, self.match_size_y))
                 game.run()
                 self.screen.erase()
                 update_callbacks(self.on_connect, self.on_receive_data)
