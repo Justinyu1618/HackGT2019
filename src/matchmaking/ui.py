@@ -1,6 +1,6 @@
 from networking import sio
 
-from src.tron.game import Game
+from src.pong.game import Game
 import curses, sys, uuid
 
 from src.landing_art.pong.pong_host import *

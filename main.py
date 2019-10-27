@@ -1,16 +1,12 @@
 from networking import sio
+import sys
+
+if len(sys.argv) == 1:
+    from src.landing_art.ascii_arcade import ascii_arcade_landing
 
 from src.matchmaking import Matchmaking
 from src.pong.game import Game
 import curses, sys
-
-def run_host(stdscr):
-    game = Game(stdscr, sio, host=True)
-    game.run()
-
-def run_client(stdscr):
-    game = Game(stdscr, sio, host=False)
-    game.run()
 
 def main(stdscr, match_code=None):
     match = Matchmaking(stdscr, sio, match_code)
@@ -28,6 +24,7 @@ if __name__ == '__main__':
             curses.wrapper(main, sys.argv[1])
     else:
         stdscr = curses.initscr()
+        stdscr.erase()
         curses.start_color()
         stdscr.nodelay(True)
         curses.wrapper(main)

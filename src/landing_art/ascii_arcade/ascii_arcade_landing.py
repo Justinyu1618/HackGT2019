@@ -1,6 +1,6 @@
 import random, curses, time
 from curses import textpad
-from pics import *
+from src.landing_art.ascii_arcade.pics import *
 
 MAX_FRAME = 12
 MAX_CAR_FRAME = 36
@@ -97,7 +97,7 @@ def main(stdscr):
 
   while 1:
     key = stdscr.getch()
-    if key == ord('w'):
+    if key == 10:#ord('w'):
       break
 
     if frame < MAX_FRAME:
