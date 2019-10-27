@@ -117,7 +117,7 @@ def read_handler(socket, buf):
         message = socket.recv(BUFFER_SIZE)
         if not message:
             break
-        logging.debug("receiving data : %s", data)
+        logging.debug("receiving data : %s", message)
 
         try:
             message = json.loads(message)
