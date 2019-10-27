@@ -94,7 +94,12 @@ blank_avatar = [
 AVATAR_WIDTH = 10
 AVATAR_HEIGHT = 5 
 
-def main(stdscr):
+finished = False
+number_players = 0
+
+def main(stdscr, game_code):
+  global finished, number_players
+
   curses.curs_set(0)
   stdscr.nodelay(1)
   stdscr.timeout(200)
@@ -132,11 +137,10 @@ def main(stdscr):
     4: [sw//2 - 2*AVATAR_WIDTH, sw//2 - AVATAR_WIDTH, sw//2, sw//2 + AVATAR_WIDTH],
   }
 
-  number_players = 1
   motion = [4, 3]
   frame = 1
 
-  game_code_msg = 'Game Code: 66db'
+  game_code_msg = f'Game Code: {game_code}'
   start_msg = 'Press (s) to start!'
   add_msg = f'More players can join! ({number_players}/4)'
   full_msg = 'Lobby is full!'
@@ -149,7 +153,7 @@ def main(stdscr):
 
   display_avatar( stdscr, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
   
-  while 1:
+  while not finished:
     add_msg = f'More players can join! ({number_players}/4)'
     if number_players < 4:
       stdscr.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, add_msg)
@@ -158,10 +162,6 @@ def main(stdscr):
       stdscr.addstr(sh//2 + 3, sw//2 - len(full_msg)//2, full_msg)
 
     key = stdscr.getch()
-    if key == ord('n') and number_players < 4:
-      number_players += 1
-    if key == ord('m') and number_players > 1:
-      number_players -= 1
     if key == ord('s'):
       break
     
@@ -231,4 +231,4 @@ def display_fire(stdscr, fire_frame, sw, position):
       counter += 1
   stdscr.attroff(curses.color_pair(color))
 
-curses.wrapper(main)
+#curses.wrapper(main)

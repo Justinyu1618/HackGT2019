@@ -24,8 +24,8 @@ class Game:
 
         max_y, max_x = self.window.getmaxyx()
 
-        self.car1 = Car(15, 15, 1, 2)
-        self.car2 = Car(10, 10, 2, 2)
+        self.car1 = Car(10, 10, 1, 2)
+        self.car2 = Car(max_x - 10, 10, 2, 2)
         self.scorex = 0
         self.scorey = 0
         self.host = host
@@ -39,7 +39,11 @@ class Game:
         line1 = "GAME OVER"
         self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
 
-        line2 = f"PLAYER {i} WINS"
+        if i == 1 and self.host or i == 2 and not self.host:
+            line2 = "YOU WIN"
+        else:
+            line2 = "YOU LOSE"
+
         self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
     def update(self, keys1, keys2):
@@ -131,7 +135,7 @@ class Game:
                         "keys": list(keys)
                     }
 
-                if timestep % 33 == 0 and keys_event is not None:
+                if timestep % 20 == 0 and keys_event is not None:
                     self.sio.emit('data', keys_event)
                     keys_event = None
 
@@ -140,6 +144,6 @@ class Game:
             if self.host:
                 curses.napms(max(0,int(FREQ - (time.time() - start_time))))
             else:
-                curses.napms(1)
+                curses.napms(10)
 
             timestep += 1
