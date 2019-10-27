@@ -1,6 +1,6 @@
 from networking import sio
 
-from src.pong.game import Game
+from src.tron.game import Game
 import curses, sys, uuid
 
 MAX_PLAYERS = 4
