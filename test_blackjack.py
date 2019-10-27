@@ -13,6 +13,9 @@ def main(stdscr, match_code=None):
     match.run()
 
 if __name__ == '__main__':
-    stdscr = curses.initscr()
-    stdscr.nodelay(True)
-    curses.wrapper(main)
+    if(len(argv) == 2):
+        curses.wrapper(main, sys.argv[1])
+    else:
+        stdscr = curses.initscr()
+        stdscr.nodelay(True)
+        curses.wrapper(main)
