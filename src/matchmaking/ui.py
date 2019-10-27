@@ -44,6 +44,7 @@ class Matchmaking:
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
         
         self.bio = bio
+        self.connected = False
         self.finished = False
         self.sid = None
 
@@ -175,11 +176,14 @@ class Matchmaking:
             self.handle_input(self.screen.getch())
             curses.napms(150)
             self.screen.refresh()
-
-            if self.host:
-                start("CLIENT", conn=self.on_connect, recv=self.on_receive_data, name=NAME)
-            else:
-                start("SERVER", conn=self.on_connect, recv=self.on_receive_data)
+            
+            if not self.connected:
+                if not self.host:
+                    start("CLIENT", conn=self.on_connect, recv=self.on_receive_data, name=NAME)
+                    self.connected = True
+                else:
+                    start("SERVER", conn=self.on_connect, recv=self.on_receive_data)
+                    self.connected = True
 
             if self.finished:
                 self.screen.erase()
