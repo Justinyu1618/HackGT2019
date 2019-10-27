@@ -37,8 +37,9 @@ class Matchmaking:
         self.screen = stdscr
         self.H = curses.LINES
         self.W = curses.COLS
-
+        
         self.players = []
+        self.add_player(Player(0, True))
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
         
@@ -58,10 +59,7 @@ class Matchmaking:
             self.bio.write("match", {"code": self.match_code, "status": "join_match", "size": (self.screen.getmaxyx())})
 
     def on_receive_data(self, event, data):
-        if event == "info":
-            self.sid = data["sid"]
-            self.add_player(Player(self.sid, True))
-        elif event == "match" and data["code"] == self.match_code:
+        if event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
                 assert self.host
                 self.add_player(Player(data["sid"], False))
