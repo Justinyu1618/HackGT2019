@@ -121,14 +121,14 @@ def read_handler(socket, buf):
 
         try:
             message = json.loads(message)
+
+            # handle callback functions
+            if recv_data_callback is not None:
+                event = message["event"]
+                data = message["data"]
+                recv_data_callback(event, data)
         except ValueError:
             logging.error("message must be json serialized")
-
-        # handle callback functions
-        if recv_data_callback is not None:
-            event = message["event"]
-            data = message["data"]
-            recv_data_callback(event, data)
 
         buf.appendleft(message)
     socket.close()
@@ -140,7 +140,6 @@ def socket_init(socket_class, name=None):
     socket_class = SERVER or CLIENT
     returns:
         bio     | BluetoothIO object (read/write)
-        threads | threading objects
     """
     # initialize sockets
     if socket_class == "SERVER":
@@ -167,4 +166,8 @@ def socket_init(socket_class, name=None):
         ))
     ]
 
-    return bio, threads 
+    # start threads
+    for t in threads:
+        t.start()
+
+    return bio

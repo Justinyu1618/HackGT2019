@@ -2,7 +2,7 @@ from btio import *
 
 
 NAME = "rinik-T450s"
-SOCKET_CLASS = "CLIENT"
+SOCKET_CLASS = "SERVER"
 
 
 def connected_callback():
@@ -16,10 +16,6 @@ def recv_data_callback(event, data):
 if __name__ == "__main__":
     update_callbacks(conn=connected_callback, recv=recv_data_callback)
     bio, threads = socket_init(SOCKET_CLASS, name=NAME)
-
-    # start threads
-    for t in threads:
-        t.start()
 
     bio.write("data",  "test1")
     bio.write("data",  "test2")
