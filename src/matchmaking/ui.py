@@ -25,13 +25,14 @@ class Player:
 
 
 class Matchmaking:
-    def __init__(self, stdscr, btio, match_code=None):
+    def __init__(self, stdscr, match_code=None):
         if match_code is None:
             self.match_code = str(uuid.uuid4())[:4]
             print("MATCH CODE: ", self.match_code)
             self.host = True
         else:
             self.match_code = match_code
+            print("NO MATCH CODE")
             self.host = False
 
         self.screen = stdscr
