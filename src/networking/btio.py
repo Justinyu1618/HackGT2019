@@ -12,8 +12,14 @@ from bluetooth import (
     RFCOMM
 )
 
-import random
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig(
+    level = logging.DEBUG,
+    format = "%(asctime)s %(message)s",
+    handlers = [logging.FileHandler('bluetooth.log')]
+)
+
+logger = logging.getLogger()
 
 
 # constants
@@ -63,7 +69,7 @@ def server_init():
     """
     initialize server socket
     """
-    logging.debug("server initialization")
+    logger.debug("server initialization")
     server_socket = BluetoothSocket(RFCOMM)
     server_socket.bind(("", PORT))
     server_socket.listen(1)
@@ -75,21 +81,21 @@ def client_init(server_name):
     """
     initialize client socket
     """
-    logging.debug("client initialization")
+    logger.debug("client initialization")
     
     server_address = None
 
     devices = discover_devices()
     for device_address in devices:
         device_name = lookup_name(device_address)
-        logging.debug("found device : %s", device_name)
+        logger.debug("found device : %s", device_name)
 
         if device_name == server_name:
             server_address = device_address
             break
 
     if server_address is None:
-        logging.error("could not connect to %s", server_name)
+        logger.error("could not connect to %s", server_name)
         sys.exit(0)
 
     client_socket = BluetoothSocket(RFCOMM)
@@ -109,7 +115,7 @@ def write_handler(socket, buf):
     while True:
         try:
             message = buf.pop()
-            logging.debug("sending data : %s", message)
+            logger.debug("sending data : %s", message)
             socket.send(message)
         except IndexError:
             time.sleep(WAIT_INTERVAL)
@@ -123,7 +129,7 @@ def read_handler(socket, buf):
         message = socket.recv(BUFFER_SIZE)
         if not message:
             break
-        logging.debug("receiving data : %s", message)
+        logger.debug("receiving data : %s", message)
 
         try:
             message = json.loads(message)
@@ -134,7 +140,7 @@ def read_handler(socket, buf):
                 data = message["data"]
                 recv_data_callback(event, data)
         except ValueError:
-            logging.error("message must be json serialized")
+            logger.error("message must be json serialized")
 
         buf.appendleft(message)
     socket.close()
