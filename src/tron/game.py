@@ -77,9 +77,9 @@ class Game:
             if self.cars[i].x < 0 or self.cars[i].x >= w or self.cars[i].y < 0 or \
                     self.cars[i].y >= h or chr(self.window.inch(self.cars[i].y,
                         self.cars[i].x)) != " ":
-                self.cars[self.players[i].sid].dead = True
+                self.cars[i].dead = True
 
-            if self.cars[self.players[i].sid].dead:
+            if self.cars[i].dead:
                 num_dead += 1
             else:
                 sid_winner = self.players[i].sid
@@ -115,6 +115,16 @@ class Game:
             else:
                 self.opponent_data[data["sid"]] = data
 
+    def i_from_sid(self, sid):
+        i = 0
+
+        for player in self.players:
+            if player.sid == sid:
+                return i
+            i += 1
+
+        return -1
+
     def run(self):
         self.window.clear()
         self.sio.update_callbacks(recv=self.data_received)
@@ -132,12 +142,12 @@ class Game:
             if self.host:
                 op_keys = {}
                 for key in self.opponent_data:
-                    if self.cars[key].dead:
+                    if self.cars[self.i_from_sid(key)].dead:
                         continue
 
                     op_keys[key] = set(self.opponent_data[key]["keys"])
 
-                if not self.cars[self.sid].dead:
+                if not self.cars[self.i_from_sid(self.sid)].dead:
                     op_keys[self.sid] = keys
                 self.opponent_data = {}
                 game_state = self.update(op_keys)
