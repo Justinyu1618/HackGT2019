@@ -94,6 +94,8 @@ class Game():
         self.sio.update_delegate(self.delegate)
         timestep = 0
 
+        keys_event = {}
+
         while True:
             start_time = time.time()
             keys, c = set(), self.window.getch()
@@ -114,10 +116,21 @@ class Game():
                     self.render(self.opponent_data['state'], unserialize=True)
                     self.opponent_data = None
 
-                self.sio.emit('data', {'code': self.match_code, 'keys': list(keys)})
+                if len(keys) > 0:
+                    keys_event = {
+                        "code": self.match_code,
+                        "keys": list(keys)
+                    }
+
+                if timestep % 33 == 0:
+                    self.sio.emit('data', keys_event)
+                    keys_event = None
+
             curses.flushinp()
             
             if self.host:
                 curses.napms(max(0,int(FREQ - (time.time() - start_time))))
+            else:
+                curses.napms(1)
 
             timestep += 1
