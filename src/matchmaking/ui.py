@@ -13,8 +13,8 @@ NAME = "rinik-T450s"
 
 class Player:
     def __init__(self, sid, host):
-        self.sid = sid
-        self.host = host
+        self.sid = sid     # unique ID
+        self.host = host   # boolean (host : True)
 
     def serialize(self):
         return {k: v for k, v in self.__dict__.items()}
@@ -54,9 +54,12 @@ class Matchmaking:
 
     def on_connect(self):
         if self.host:
-            self.bio.write("match", {"code": self.match_code, "status": "new_match"})
+            self.bio.write("match", {"code": self.match_code, 
+                                     "status": "new_match"})
         else:
-            self.bio.write("match", {"code": self.match_code, "status": "join_match", "size": (self.screen.getmaxyx())})
+            self.bio.write("match", {"code": self.match_code, 
+                                     "status": "join_match", 
+                                     "size": (self.screen.getmaxyx())})
 
     def on_receive_data(self, event, data):
         if event == "match" and data["code"] == self.match_code:
@@ -194,8 +197,10 @@ class Matchmaking:
 
             if self.finished:
                 self.screen.erase()
+                #game = Game(self.screen, self.bio, self.host, self.match_code,
+                #        self.sid, self.players, (self.match_size_x, self.match_size_y))
                 game = Game(self.screen, self.bio, self.host, self.match_code,
-                        self.sid, self.players, (self.match_size_x, self.match_size_y))
+                        (self.match_size_x, self.match_size_y))
                 game.run()
                 self.screen.erase()
                 update_callbacks(self.on_connect, self.on_receive_data)
