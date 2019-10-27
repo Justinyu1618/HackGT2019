@@ -78,8 +78,10 @@ class Game:
             if self.players[i].sid not in keys:
                 keys[self.players[i].sid] = {}
 
-            self.window.addch(self.cars[i].y, self.cars[i].x, "+",
-                    curses.color_pair(1))
+            self.window.attron(curses.color_pair(i + 1))
+            self.window.addch(self.cars[i].y, self.cars[i].x, "+")
+            self.window.attroff(curses.color_pair(i + 1))
+
             self.cars[i].update(self.window, keys[self.players[i].sid])
 
         h, w = self.window.getmaxyx()
@@ -112,11 +114,13 @@ class Game:
             return
 
         if not self.host:
-            for car in self.cars:
+            for i, car in enumerate(self.cars):
                 if car.dead:
                     continue
 
+                self.window.attron(curses.color_pair(i + 1))
                 self.window.addch(car.y, car.x, "+")
+                self.window.attroff(curses.color_pair(i + 1))
 
         if unserialize:
             cars = game_state["cars"]

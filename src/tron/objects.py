@@ -29,7 +29,9 @@ class Car:
             self.y += 1
 
     def draw(self, window):
-        window.addch(self.y, self.x, "%", curses.color_pair(self.player))
+        window.attron(curses.color_pair(self.player))
+        window.addch(self.y, self.x, "%")
+        window.attroff(curses.color_pair(self.player))
 
     def serialize(self):
         return {k: v for k, v in self.__dict__.items()}
@@ -37,7 +39,3 @@ class Car:
     def populate(self, dict):
         for k, v in dict.items():
             setattr(self, k, v)
-
-def init_colors():
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)

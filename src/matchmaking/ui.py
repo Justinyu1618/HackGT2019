@@ -99,6 +99,7 @@ class Matchmaking:
         box = [[3, 3], [sh-3, sw-3]]
         textpad.rectangle(self.screen, box[0][0], box[0][1], box[1][0], box[1][1])
 
+        curses.use_default_colors()
         curses.init_pair(1, curses.COLOR_RED, -1)
         curses.init_pair(2, curses.COLOR_GREEN, -1)
         curses.init_pair(3, curses.COLOR_YELLOW, -1)

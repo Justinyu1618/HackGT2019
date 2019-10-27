@@ -2,7 +2,6 @@ from networking import sio
 
 from src.matchmaking import Matchmaking
 from src.pong.game import Game
-from src.tron.objects import init_colors
 import curses, sys
 
 def run_host(stdscr):
@@ -30,6 +29,5 @@ if __name__ == '__main__':
     else:
         stdscr = curses.initscr()
         curses.start_color()
-        init_colors()
         stdscr.nodelay(True)
         curses.wrapper(main)
