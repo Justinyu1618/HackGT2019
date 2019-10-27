@@ -1,6 +1,7 @@
 from networking import sio
 
-from src.pong.game import Game
+from src.pong.game import Game as Pong
+from src.tron.game import Game as Tron
 import curses, sys, uuid
 
 from src.landing_art.pong.pong_host import *
@@ -22,7 +23,7 @@ class Player:
 
 class Matchmaking:
 
-    def __init__(self, stdscr, sio, match_code=None):
+    def __init__(self, stdscr, sio, game, match_code=None):
         if match_code is None:
             self.match_code = str(uuid.uuid4())[:4]
             self.host = True
@@ -31,6 +32,7 @@ class Matchmaking:
             self.host = False
 
         self.sio = sio
+        self.game = game
 
         self.screen = stdscr
         self.H = curses.LINES
@@ -195,8 +197,13 @@ class Matchmaking:
 
             if self.finished:
                 self.screen.erase()
-                game = Game(self.screen, self.sio, self.host, self.match_code,
+                if self.game == "tron":
+                    game = Tron(self.screen, self.sio, self.host, self.match_code,
                         self.sid, self.players, (self.match_size_x, self.match_size_y))
+                else:
+                    game = Pong(self.screen, self.sio, self.host,
+                            self.match_code, (self.match_size_x,
+                                self.match_size_y))
                 game.run()
                 self.screen.erase()
                 self.sio.update_callbacks(self.on_connect, self.on_receive_data)
