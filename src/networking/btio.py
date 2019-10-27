@@ -138,6 +138,8 @@ def read_handler(socket, buf):
             if recv_data_callback is not None:
                 event = message["event"]
                 data = message["data"]
+                # hardcode sid
+                data["sid"] = 1
                 recv_data_callback(event, data)
         except ValueError:
             logger.error("message must be json serialized")
