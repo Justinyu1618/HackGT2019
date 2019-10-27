@@ -6,7 +6,8 @@ class Car:
         self.x = x
         self.y = y
         self.player = player
-        self.direction = 0
+        self.direction = direction
+        self.dead = False
 
     def update(self, window, keys):
         if curses.KEY_LEFT in keys and self.direction != 1:

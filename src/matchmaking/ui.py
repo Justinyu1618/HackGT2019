@@ -9,8 +9,16 @@ MAX_PLAYERS = 4
 
 class Player:
 
-    def __init__(self, host):
+    def __init__(self, sid, host):
+        self.sid = sid
         self.host = host
+
+    def serialize(self):
+        return {k: v for k, v in self.__dict__.items()}
+
+    def populate(self, dict):
+        for k, v in dict.items():
+            setattr(self, k, v)
 
 class Matchmaking:
 
@@ -29,13 +37,13 @@ class Matchmaking:
         self.W = curses.COLS
 
         self.players = []
-        self.add_player(Player(True))
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
 
         self.sio.start(self.on_connect, self.on_receive_data)
 
         self.finished = False
+        self.sid = None
 
     def on_connect(self):
         if self.host:
@@ -44,21 +52,30 @@ class Matchmaking:
             self.sio.emit("match", {"code": self.match_code, "status": "join_match", "size": (self.screen.getmaxyx())})
 
     def on_receive_data(self, event, data):
-        if event == "match" and data["code"] == self.match_code:
+        if event == "info":
+            self.sid = data["sid"]
+            self.add_player(Player(self.sid, True))
+        elif event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
                 assert self.host
-                self.add_player(Player(False))
+                self.add_player(Player(data["sid"], False))
 
                 self.sio.emit("match", {
                     "code": self.match_code,
                     "status": "players",
-                    "players": [i for i, _ in enumerate(self.players)]
+                    "players": [x.serialize() for x in self.players]
                 })
+
                 self.match_size_x = min(self.match_size_x, data["size"][1])
                 self.match_size_y = min(self.match_size_y, data["size"][0])
             elif data["status"] == "players":
                 assert not self.host
-                self.players = [Player(False) for _ in data["players"]]
+                self.players = []
+
+                for p in data["players"]:
+                    player = Player(None, None)
+                    player.populate(p)
+                    self.players.append(player)
             elif data["status"] == "start":
                 assert not self.host
                 self.finished = True
@@ -170,5 +187,6 @@ class Matchmaking:
             curses.napms(150)
             self.screen.refresh()
 
-        game = Game(self.screen, self.sio, self.host, self.match_code, (self.match_size_x, self.match_size_y))
+        game = Game(self.screen, self.sio, self.host, self.match_code,
+                self.sid, self.players, (self.match_size_x, self.match_size_y))
         game.run()

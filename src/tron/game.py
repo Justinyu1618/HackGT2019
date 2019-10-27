@@ -3,10 +3,10 @@ import time
 
 from .objects import Car
 
-FREQ = 200
+FREQ = 150
 
 class Game:
-    def __init__(self, window, sio, host, match_code, size=None):
+    def __init__(self, window, sio, host, match_code, sid, players, size=None):
         window.clear()
         window.refresh()
         bounding_wind = window.derwin(size[1], size[0],0,0)
@@ -24,74 +24,88 @@ class Game:
 
         max_y, max_x = self.window.getmaxyx()
 
-        self.car1 = Car(10, 10, 1, 2)
-        self.car2 = Car(max_x - 10, 10, 2, 2)
+        self.sid = sid
+        self.players = players
+
+        self.cars = []
+        self.cars.append(Car(10, 10, 1, 0))
+        self.cars.append(Car(max_x - 10, 10, 2, 0))
+
+        if len(players) >= 3:
+            self.cars.append(Car(10, 12, 3, 2))
+
+        if len(players) == 4:
+            self.cars.append(Car(max_x - 10, 12, 4, 2))
+
         self.scorex = 0
         self.scorey = 0
         self.host = host
-        self.opponent_data = None
+        self.opponent_data = {}
         self.sio = sio
         self.finished = False
 
-    def display_winner(self, i):
+    def display_winner(self, sid):
         h, w = self.window.getmaxyx()
 
         line1 = "GAME OVER"
         self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
 
-        if i == 1 and self.host or i == 2 and not self.host:
+        if sid == self.sid:
             line2 = "YOU WIN"
         else:
             line2 = "YOU LOSE"
 
         self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
-    def update(self, keys1, keys2):
+    def update(self, keys):
         if self.finished:
             return None
 
-        self.window.addch(self.car1.y, self.car1.x, "+", curses.color_pair(1))
-        self.window.addch(self.car2.y, self.car2.x, "+", curses.color_pair(2))
+        for i in range(len(self.players)):
+            if self.players[i].sid not in keys:
+                keys[self.players[i].sid] = {}
 
-        self.car1.update(self.window, keys1)
-        self.car2.update(self.window, keys2)
+            self.window.addch(self.cars[i].y, self.cars[i].x, "+",
+                    curses.color_pair(1))
+            self.cars[i].update(self.window, keys[self.players[i].sid])
 
         h, w = self.window.getmaxyx()
+        num_dead = 0
+        sid_winner = ""
 
-        if self.car1.x < 0 or self.car1.x >= w or self.car1.y < 0 or \
-                self.car1.y >= h or chr(self.window.inch(self.car1.y,
-                    self.car1.x)) != " ":
-            self.finished = True
-            self.sio.emit("data", {"code": self.match_code, "winner": 2})
-            self.display_winner(2)
+        for i in range(len(self.cars)):
+            if self.cars[i].x < 0 or self.cars[i].x >= w or self.cars[i].y < 0 or \
+                    self.cars[i].y >= h or chr(self.window.inch(self.cars[i].y,
+                        self.cars[i].x)) != " ":
+                self.cars[i].dead = True
 
-        if self.car2.x < 0 or self.car2.x >= w or self.car2.y < 0 or \
-                self.car2.y >= h or chr(self.window.inch(self.car2.y,
-                    self.car2.x)) != " ":
+            if self.cars[i].dead:
+                num_dead += 1
+            else:
+                sid_winner = self.players[i].sid
+
+        if num_dead >= len(self.players) - 1:
             self.finished = True
-            self.sio.emit("data", {"code": self.match_code, "winner": 1})
-            self.display_winner(1)
+            self.sio.emit("data", {"code": self.match_code, "winner":
+                sid_winner})
+            self.display_winner(sid_winner)
 
         if self.finished:
             return None
 
-        return {
-            "car1": self.car1,
-            "car2": self.car2
-        }
+        return {"cars": self.cars}
     
     def render(self, game_state, unserialize=False):
         if not self.host:
-            self.window.addch(self.car1.y, self.car1.x, "+")
-            self.window.addch(self.car2.y, self.car2.x, "+")
+            for car in self.cars:
+                self.window.addch(car.y, car.x, "+")
 
         if unserialize:
-            for k,v in game_state.items():
-                getattr(self, k).populate(v)
-                game_state[k] = getattr(self, k)
-        draworder = sorted(game_state.values(), key=lambda o: o.x)
-        for o in draworder:
-            o.draw(self.window)
+            cars = game_state["cars"]
+            [self.cars[i].populate(cars[i]) for i in range(len(cars))]
+            
+            for o in self.cars:
+                o.draw(self.window)
 
     def data_received(self, event, data):
         if event == "data":
@@ -99,7 +113,7 @@ class Game:
                 self.finished = True
                 self.display_winner(data["winner"])
             else:
-                self.opponent_data = data
+                self.opponent_data[data["sid"]] = data
 
     def run(self):
         self.window.clear()
@@ -116,18 +130,27 @@ class Game:
                 c = self.window.getch()
 
             if self.host:
-                op_keys = set()
-                if self.opponent_data and 'keys' in self.opponent_data:
-                    op_keys = set(self.opponent_data['keys'])
-                    self.opponent_data = None
-                game_state = self.update(keys, op_keys)
+                op_keys = {}
+                for key in self.opponent_data:
+                    op_keys[key] = set(self.opponent_data[key]["keys"])
+                op_keys[self.sid] = keys
+                self.opponent_data = {}
+                game_state = self.update(op_keys)
                 if game_state is not None:
                     self.render(game_state)
-                    self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
+                    self.sio.emit('data', {
+                        'code': self.match_code,
+                        'state':{k: [x.serialize() for x in v] for k,v in game_state.items()},
+                        'timestep':timestep
+                    })
             else:
-                if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
-                    self.render(self.opponent_data['state'], unserialize=True)
-                    self.opponent_data = None
+                for key in self.opponent_data:
+                    self.render(self.opponent_data[key]["state"],
+                            unserialize=True)
+                self.opponent_data = {}
+                #if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
+                #    self.render(self.opponent_data['state'], unserialize=True)
+                #    self.opponent_data = None
 
                 if len(keys) > 0:
                     keys_event = {
