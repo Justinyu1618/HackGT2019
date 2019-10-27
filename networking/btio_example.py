@@ -4,8 +4,8 @@ import random
 from btio import socket_init
 
 
-NAME = ""
-SOCKET_CLASS = "SERVER"
+NAME = "rinik-T450s"
+SOCKET_CLASS = "CLIENT"
 
 
 if __name__ == "__main__":
