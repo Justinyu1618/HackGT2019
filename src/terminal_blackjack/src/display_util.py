@@ -114,6 +114,7 @@ class DisplayTable:
 		self.max_players = None
 	
 	def render(self, game_state=None):
+		self.dealer_wind.addstr(1,1,"HELLo")
 		if game_state is not None:
 			players, self.dealer = game_state['players'], game_state['dealer']
 			self.state, self.turn = game_state['state'], game_state['turn']
@@ -266,10 +267,11 @@ class DisplayTable:
 		self.dealer_wind.addstr(int(self.H/4), max(int(self.W/2),int(self.W*3/4-len(msg1)/2)), msg1)
 
 	def draw_turn_screen(self):
+		m = {'h':'HIT', 's':'STAND', 'd':'DOUBLE'}
 		if self.turn:
 			for i in range(len(self.turn.options)):
 				option = self.turn.options[i]
-				msg = f"[{option.value}] - {option.name} "
+				msg = f"[{option}] - {m[option]} "
 				self.dealer_wind.addstr(2*i + int(self.H/8), max(int(self.W/2),int(self.W*5/8)), msg)
 	
 	def draw_end_screen(self):

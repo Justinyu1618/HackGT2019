@@ -22,6 +22,7 @@ class Matchmaking:
         self.H = curses.LINES
         self.W = curses.COLS
 
+        self.player = None
         self.players = []
         # self.player_wind = stdscr.derwin(self.H // 2, self.W, self.H // 2, 0)
         # self.player_wind.box()
@@ -58,27 +59,29 @@ class Matchmaking:
         if event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
                 assert self.host
-                self.add_player(Player(False,player_num=len(self.players)+1))
+                new_player = Player(False,player_num=len(self.players)+1)
+                self.add_player(new_player)
                 self.refresh()
                 # self.display.draw_players()
 
                 self.sio.emit("match", {
                     "code": self.match_code,
                     "status": "players",
-                    "players": [(i,p) for i, p in enumerate([p.serialize() for p in self.players])]
+                    "players": [(i,p) for i, p in enumerate([p.serialize() for p in self.players])],
+                    "new_player": new_player.serialize() 
                 })
                 self.match_size_x = min(self.match_size_x, data["size"][1])
                 self.match_size_y = min(self.match_size_y, data["size"][0])
             elif data["status"] == "players":
                 assert not self.host
-                open("log1.txt","w").write(str(data["players"]))
                 self.players = [Player(False, player_num=i).populate(p) for i,p in data["players"]]
                 self.display.add_players_from_list(self.players)
                 self.refresh()
+                if self.player is None:
+                    self.player = data["new_player"]
             elif data["status"] == "start":
                 assert not self.host
                 self.finished = True
-                self.screen.addstr(1,1,"HHEHEHEh")
                 self.screen.refresh()
 
     def refresh(self):
@@ -110,27 +113,6 @@ class Matchmaking:
         self.players.append(player)
         self.display.add_player(player)
         
-
-
-    # def display_player(self, i):
-    #     h, w = self.player_winds[i].getmaxyx()
-
-    #     name = f"Player {i+1}"
-    #     self.player_winds[i].addstr(1, (w - len(name)) // 2, name)
-    #     self.player_winds[i].refresh()
-
-    # def display_players(self):
-    #     height, width = self.screen.getmaxyx()
-
-    #     for i, wind in enumerate(self.players):
-    #         wind = self.player_wind.derwin(0, width // len(self.players), 0,
-    #                 (width // len(self.players)) * i)
-    #         wind.box()
-    #         wind.refresh()
-
-    #         self.player_winds[i] = wind
-    #         self.display_player(i)
-
     def handle_input(self, char):
         if char == ord("s") and self.host:
             self.sio.emit("match", {"code": self.match_code, "status": "start"})
@@ -143,11 +125,15 @@ class Matchmaking:
             curses.napms(100)
         if self.host:
             game = Game(self.screen, self.sio, self.host, self.match_code, self.player)
+            game.players = self.players
             game.display = self.display
             game.run()
-        for p in self.players:
-            
         else:
+            self.screen.addstr(10,10,"HELLO")
+            playint = PlayerInterface(self.screen, self.sio, self.match_code, self.player)
+            playint.display = self.display
+            playint.run()
+            
 
 
 

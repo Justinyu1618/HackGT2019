@@ -88,10 +88,10 @@ class Player:
 		return total
 
 	def get_options(self):
-		ret = [CMD.HIT, CMD.STAND]
+		ret = [CMD.HIT.value, CMD.STAND.value]
 		sums = set(self.sums())
 		if len(self.cards) == 2 and self.money >= self.bet and (9 in sums or 10 in sums or 11 in sums):
-			ret.append(CMD.DOUBLE)
+			ret.append(CMD.DOUBLE.value)
 		self.options = ret
 
 	def serialize(self):

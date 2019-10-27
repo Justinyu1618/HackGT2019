@@ -53,7 +53,7 @@ class Game:
         self.turn = None
         self.match_code = match_code
         self.screen.timeout(-1)
-        self.player_id = player
+        self.player = player
 
     def run(self):
         self.render()
@@ -90,21 +90,24 @@ class Game:
         game_state['players'] = [p.serialize() for p in self.players]
         game_state['dealer'] = self.dealer.serialize()
         game_state['state'] = self.state
-        game_state['turn'] = self.turn
+        game_state['turn'] = self.turn.serialize() if self.turn else None
         return game_state
 
     def send_update(self, game_state=None):
         if game_state is None:
             game_state = self.update()
         self.sio.emit('data', {'code': self.match_code, 'state':game_state})
+        self.screen.addstr(10,10,"BRUHHh")
 
 
     def render(self, game_state=None):
         if game_state is None:
             game_state = self.update()
+        open("log2.txt","w").write(str(game_state))
         self.send_update(game_state)
-        game_state["players"] = [Player().populate(p) for p in game_state["players"]]
-        game_state["dealer"] = Dealer().populate(game_state["dealer"])
+        game_state["players"] = [Player(False).populate(p) for p in game_state["players"]]
+        game_state["dealer"] = Dealer(False).populate(game_state["dealer"])
+        game_state["turn"] = Player(False).populate(game_state["turn"]) if game_state["turn"] else None
         self.display.render(game_state)
         
 
@@ -116,13 +119,12 @@ class Game:
     def request(self, player, c_type='ch'):
         if player.id == self.player.id:
             if c_type == 'str':
-                if self.msg['type'] == 'ch':
-                    return self.screen.getch()
-                else:
-                    return self.screen.getstr()
-        p_id = player_id
+                return self.screen.getstr()
+            else:
+                return self.screen.getch()
+        p_id = player.id
         self.sio.emit('req', {'code': self.match_code, 'player_id':p_id, 'type':c_type})
-        while(self.resp is None or self.msg['player_id'] != p_id):
+        while(self.resp is None or self.resp['player_id'] != p_id):
             pass
         ret = self.resp['data']
         self.resp = None
@@ -130,8 +132,9 @@ class Game:
 
     def _betting(self):
         for player in self.players:
-            self.turn = player.id
+            self.turn = player
             self.render()
+            bet = ""
             while(not bet.isdigit() or int(bet) > player.money
                     or int(bet) < BET_MIN or int(bet) > BET_MAX):
                 bet = self.request(player, 'str')
@@ -153,17 +156,17 @@ class Game:
         for i in range(len(self.players)):
             player = self.players[i]
             player.get_options()
-            self.turn = player.id
+            self.turn = player
             self.render()
             while(True):
                 cmd = None
                 while(cmd not in list(map(lambda x:ord(x.value), CMD))):
-                    cmd = self.request(player.id)
+                    cmd = self.request(player)
                 if cmd == ord('h'):
                     player.add_card(self.dealer.deal())
                 elif cmd == ord(CMD.STAND.value):
                     break
-                elif cmd == ord(CMD.DOUBLE.value) and CMD.DOUBLE in set(player.options):
+                elif cmd == ord(CMD.DOUBLE.value) and CMD.DOUBLE.value in set(player.options):
                     player.money -= player.bet
                     player.bet *= 2
                     player.add_card(self.dealer.deal())
@@ -186,7 +189,7 @@ class Game:
             dealer_sum = max(self.dealer.sums())
             for p in self.players:
                 if p.cards:
-                    self.turn = p.id
+                    self.turn = p
                     self.print(f"{p.name} vs Dealer", 1000)
                     if max(p.sums()) > dealer_sum: 
                         self.print(f"{p.name} Wins!")
@@ -284,23 +287,25 @@ class PlayerInterface:
         self.req = None
 
     def render(self, game_state):
-        game_state["players"] = [Player().populate(p) for p in game_state["players"]]
-        game_state["dealer"] = Dealer().populate(game_state["dealer"])
+        game_state["players"] = [Player(False).populate(p) for p in game_state["players"]]
+        game_state["dealer"] = Dealer(False).populate(game_state["dealer"])
+        game_state["turn"] = Player(False).populate(game_state["turn"])
         self.display.render(game_state)
 
     def handle_data(self, event, data):
         if event == "data":
-            self.game_update = data
+            self.game_update = data['state']
         elif event == "req" and data["player_id"] == self.player.id:
             self.req = data
 
     def run(self):
+        self.display.render()
         while(True):
             if self.game_update is not None:
                 self.render(self.game_update)
                 self.game_update = None
             if self.req is not None:
-                if self.msg['type'] == 'ch':
+                if self.req['type'] == 'ch':
                     inp = self.screen.getch()
                 else:
                     inp = self.screen.getstr()
