@@ -8,13 +8,13 @@ class Car:
         self.direction = 0
 
     def update(self, window, keys):
-        if curses.KEY_LEFT in keys:
+        if curses.KEY_LEFT in keys and self.direction != 1:
             self.direction = 3
-        elif curses.KEY_UP in keys:
+        elif curses.KEY_UP in keys and self.direction != 2:
             self.direction = 0
-        elif curses.KEY_RIGHT in keys:
+        elif curses.KEY_RIGHT in keys and self.direction != 3:
             self.direction = 1
-        elif curses.KEY_DOWN in keys:
+        elif curses.KEY_DOWN in keys and self.direction != 0:
             self.direction = 2
 
         if self.direction == 3:

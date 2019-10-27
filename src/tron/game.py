@@ -28,11 +28,19 @@ class Game:
         self.car2 = Car(10, 10, 2)
         self.scorex = 0
         self.scorey = 0
-        #self.score = Score(1, 1, "Score: 0:0")
         self.host = host
         self.opponent_data = None
         self.sio = sio
         self.finished = False
+
+    def display_winner(self, i):
+        h, w = self.window.getmaxyx()
+
+        line1 = "GAME OVER"
+        self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
+
+        line2 = f"PLAYER {i} WINS"
+        self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
     def update(self, keys1, keys2):
         if self.finished:
@@ -49,24 +57,16 @@ class Game:
         if self.car1.x < 0 or self.car1.x >= w or self.car1.y < 0 or \
                 self.car1.y >= h or chr(self.window.inch(self.car1.y,
                     self.car1.x)) != " ":
-            line1 = "GAME OVER"
-            self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
-
-            line2 = "PLAYER 2 WINS"
-            self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
-
             self.finished = True
+            self.sio.emit("data", {"code": self.match_code, "winner": 2})
+            self.display_winner(2)
 
         if self.car2.x < 0 or self.car2.x >= w or self.car2.y < 0 or \
                 self.car2.y >= h or chr(self.window.inch(self.car2.y,
                     self.car2.x)) != " ":
-            line1 = "GAME OVER"
-            self.window.addstr(h // 2 - 1, (w - len(line1)) // 2 - 1, line1)
-
-            line2 = "PLAYER 1 WINS"
-            self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
-
             self.finished = True
+            self.sio.emit("data", {"code": self.match_code, "winner": 1})
+            self.display_winner(1)
 
         if self.finished:
             return None
@@ -77,6 +77,10 @@ class Game:
         }
     
     def render(self, game_state, unserialize=False):
+        if not self.host:
+            self.window.addch(self.car1.y, self.car1.x, "+")
+            self.window.addch(self.car2.y, self.car2.x, "+")
+
         if unserialize:
             for k,v in game_state.items():
                 getattr(self, k).populate(v)
@@ -87,7 +91,11 @@ class Game:
 
     def data_received(self, event, data):
         if event == "data":
-            self.opponent_data = data
+            if "winner" in data:
+                self.finished = True
+                self.display_winner(data["winner"])
+            else:
+                self.opponent_data = data
 
     def run(self):
         self.window.clear()
