@@ -1,0 +1,3 @@
+import curses, time
+
+class 

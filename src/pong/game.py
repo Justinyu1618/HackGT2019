@@ -1,44 +1,12 @@
-import random, curses, time
+import curses
+import time
+
 from .objects import Ball, Paddle, Score
-# from .networking import NetworkingDelegate
 
 FREQ = 33   
 
-from abc import ABC, abstractmethod
-
-class NetworkingDelegate(ABC):
-
-    @abstractmethod
-    def connected(self):
-        pass
-
-    @abstractmethod
-    def received_data(self):
-        pass
-
-    @abstractmethod
-    def disconnected(self):
-        pass
-
-class PongDelegate(NetworkingDelegate):
-
-    def __init__(self, data_received):
-        self.data_received = data_received
-
-    def connected(self):
-        print("connected!")
-        pass
-
-    def received_data(self, event, data):
-        if event == "data":
-            self.data_received(data)
-
-    def disconnected(self):
-        pass
-
 class Game():
     def __init__(self, window, sio, host, match_code, size=None):
-        # window.box()
         window.clear()
         window.refresh()
         bounding_wind = window.derwin(size[1], size[0],0,0)
@@ -63,7 +31,6 @@ class Game():
         self.scorey = 0
         self.score = Score(1, 1, "Score: 0:0")
         self.host = host
-        self.delegate = PongDelegate(self.data_received)
         self.opponent_data = None
         self.sio = sio
 
@@ -86,12 +53,13 @@ class Game():
             o.draw(self.window)
         self.window.refresh()
 
-    def data_received(self, data):
-        self.opponent_data = data
+    def data_received(self, event, data):
+        if event == "data":
+            self.opponent_data = data
 
     def run(self):
         self.window.clear()
-        self.sio.update_delegate(self.delegate)
+        self.sio.update_callbacks(recv=self.data_received)
         timestep = 0
 
         keys_event = {}
@@ -122,7 +90,7 @@ class Game():
                         "keys": list(keys)
                     }
 
-                if timestep % 33 == 0:
+                if timestep % 33 == 0 and keys_event is not None:
                     self.sio.emit('data', keys_event)
                     keys_event = None
 
