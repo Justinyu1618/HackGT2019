@@ -26,7 +26,7 @@ def main(stdscr):
   # Enter to start 
 
   stdscr.attron(curses.color_pair(2))
-  counter = 3
+  counter = 0
   for line in press_enter:
     stdscr.addstr(sh//2 + counter, sw//2 - len(line)//2, line)
     counter += 1
@@ -35,7 +35,7 @@ def main(stdscr):
 # Helicopter
 
   stdscr.attron(curses.color_pair(3))
-  counter = 3
+  counter = -3
   for line in helicopter:
     stdscr.addstr(3*(sh//4) + counter, sw//2 - len(line)//2, line)
     counter += 1
@@ -88,6 +88,49 @@ def main(stdscr):
   counter = 1
   for line in mario:
     stdscr.addstr(sh//3 + counter, 7*(sw//8) - len(line)//2, line)
+    counter += 1
+  stdscr.attroff(curses.color_pair(2))
+
+  ## Space Invaders
+
+  # Player Ship
+
+  stdscr.attron(curses.color_pair(2))
+  counter = -1
+  for line in invader_player:
+    stdscr.addstr(sh//4 + counter, (sw//8) - len(line)//2, line)
+    counter += 1
+  stdscr.attroff(curses.color_pair(2))
+
+  # Alien Ship
+
+  stdscr.attron(curses.color_pair(2))
+  counter = -6
+  for line in invader_alien:
+    stdscr.addstr(sh//5 + counter, (sw//8) - len(line)//2 - 15, line)
+    counter += 1
+  stdscr.attroff(curses.color_pair(2))
+
+  stdscr.attron(curses.color_pair(2))
+  counter = -7
+  for line in invader_alien2:
+    stdscr.addstr(sh//5 + counter, (sw//8) - len(line)//2, line)
+    counter += 1
+  stdscr.attroff(curses.color_pair(2))
+
+  stdscr.attron(curses.color_pair(2))
+  counter = -6
+  for line in invader_alien:
+    stdscr.addstr(sh//5 + counter, (sw//8) - len(line)//2 + 15, line)
+    counter += 1
+  stdscr.attroff(curses.color_pair(2))
+
+  # Racecar
+
+  stdscr.attron(curses.color_pair(2))
+  counter = 4
+  for line in racecar:
+    stdscr.addstr(4*(sh//5) + counter, (sw//3) - len(line)//2, line)
     counter += 1
   stdscr.attroff(curses.color_pair(2))
 
