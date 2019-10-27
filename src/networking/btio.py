@@ -46,6 +46,12 @@ class BluetoothIO:
         self.write_buf.appendleft(message)
 
 
+# initialize buffers
+write_buf = collections.deque()
+read_buf = collections.deque()
+bio = BluetoothIO(read_buf, write_buf)
+
+
 def update_callbacks(conn=None, recv=None):
     global connected_callback, recv_data_callback
 
@@ -148,12 +154,7 @@ def start_server(socket_class, name=None):
 
     if socket_class == "CLIENT":
         socket = client_init(name)
-    
-    # initialize buffers
-    write_buf = collections.deque()
-    read_buf = collections.deque()
-    bio = BluetoothIO(read_buf, write_buf)
-    
+     
     # initialize threads
     threads = [
         threading.Thread(target=write_handler, kwargs=dict(
@@ -169,8 +170,6 @@ def start_server(socket_class, name=None):
     # start threads
     for t in threads:
         t.start()
-
-    return bio
 
 
 def start(socket_class, conn=None, recv=None, name=None):

@@ -7,7 +7,7 @@ from .objects import Ball, Paddle, Score
 FREQ = 33   
 
 class Game():
-    def __init__(self, window, btio, host, match_code, size=None):
+    def __init__(self, window, bio, host, match_code, size=None):
         window.clear()
         window.refresh()
         bounding_wind = window.derwin(size[1], size[0],0,0)
@@ -33,7 +33,7 @@ class Game():
         self.score = Score(1, 1, "Score: 0:0")
         self.host = host
         self.opponent_data = None
-        self.btio = btio
+        self.bio = bio
 
     def update(self, keys1, keys2):
         hit_edge = self.ball.update(self.window, [self.paddle1, self.paddle2])
@@ -79,7 +79,7 @@ class Game():
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
-                self.btio.write('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
+                self.bio.write('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
                 if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
@@ -92,7 +92,7 @@ class Game():
                     }
 
                 if timestep % 33 == 0 and keys_event is not None:
-                    self.btio.write('data', keys_event)
+                    self.bio.write('data', keys_event)
                     keys_event = None
 
             curses.flushinp()
