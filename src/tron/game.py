@@ -4,8 +4,6 @@ from threading import Timer
 
 from .objects import Car
 
-FREQ = 150
-
 class Game:
     def __init__(self, window, sio, host, match_code, sid, players, size=None):
         window.clear()
@@ -154,6 +152,8 @@ class Game:
         self.sio.update_callbacks(recv=self.data_received)
         timestep = 0
 
+        FREQ = 150
+
         keys_event = {}
 
         while not self.finished:
@@ -205,6 +205,10 @@ class Game:
             
             if self.host:
                 curses.napms(max(0,int(FREQ - (time.time() - start_time))))
+
+                if timestep % 25:
+                    if FREQ > 80:
+                        FREQ -= 1
             else:
                 curses.napms(10)
 
