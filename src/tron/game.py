@@ -62,6 +62,9 @@ class Game:
             return None
 
         for i in range(len(self.players)):
+            if self.cars[i].dead:
+                continue
+
             if self.players[i].sid not in keys:
                 keys[self.players[i].sid] = {}
 
@@ -105,6 +108,9 @@ class Game:
             [self.cars[i].populate(cars[i]) for i in range(len(cars))]
             
             for o in self.cars:
+                if o.dead:
+                    continue
+
                 o.draw(self.window)
 
     def data_received(self, event, data):
