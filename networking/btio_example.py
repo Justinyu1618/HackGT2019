@@ -1,3 +1,4 @@
+import time
 import random
 
 from btio import socket_init
