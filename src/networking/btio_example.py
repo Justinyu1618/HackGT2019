@@ -2,7 +2,7 @@ from btio import *
 
 
 NAME = "rinik-T450s"
-SOCKET_CLASS = "SERVER"
+SOCKET_CLASS = "CLIENT"
 
 
 def connected_callback():

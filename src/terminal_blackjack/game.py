@@ -39,43 +39,34 @@ class BlackjackDelegate(NetworkingDelegate):
 
 class Game:
 
-    def __init__(self, stdscr, sio, host, match_code):
+    def __init__(self, stdscr, sio, host, match_code, player):
         self.players = []
         self.dealer = Dealer()
         self.display = DisplayTable(stdscr)
         self.screen = stdscr
-        self.state = "starting"
+        self.state = "betting"
         self.host = host
         self.game_state_update = None
-        self.msg = None
+        self.resp = None
         self.sio = sio
         self.delegate = BlackjackDelegate(self.handle_data)
         self.turn = None
         self.match_code = match_code
+        self.screen.timeout(-1)
+        self.player_id = player
 
-    # def run(self):
     def run(self):
+        self.render()
         while(True):
             keep_playing = True
             while(keep_playing):
-                curses.napms(1000)
-                if self.host:
-                    self.gameplay()
-                    self.reset()
-                    if not self.players:
-                        break
-                    keep_playing = self.end()
-                else:
-                    if self.game_state_update is not None:
-                        self.render(self.game_state_update)
-                        self.game_state_update = None
-                    if self.msg is not None and self.msg['player_id'] == self.id:
-                        if self.msg['type'] == 'ch':
-                            inp = self.screen.getch()
-                        else:
-                            inp = self.screen.getstr()
-                        self.sio.emit('resp', {'code': self.match_code, 'player_id':self.id, 'data':inp})
-                        self.msg = None
+                curses.napms(100)
+                # if self.host:
+                self.gameplay()
+                self.reset()
+                if not self.players:
+                    break
+                keep_playing = self.end()
             self.end_game()
     
     def change_state(self, new_state):
@@ -103,14 +94,9 @@ class Game:
         return game_state
 
     def send_update(self, game_state=None):
-        try:
-            if game_state is None:
-                game_state = self.update()
-            self.sio.emit('data', {'code': self.match_code, 'state':game_state})
-        except Exception as e:
-            print(e)
-            open("log.txt","w").write(str(game_state))
-            assert 1 == 0
+        if game_state is None:
+            game_state = self.update()
+        self.sio.emit('data', {'code': self.match_code, 'state':game_state})
 
 
     def render(self, game_state=None):
@@ -123,45 +109,23 @@ class Game:
         
 
     def handle_data(self, event, data):
-        if event == "data":
-            self.state_update = data 
-        elif event == "req" and not self.host:
-            self.msg = data 
-        elif event == "resp" and self.host:
-            self.msg = data
+        if event == "resp" and self.host:
+            self.resp = data
 
     
-
-    def start(self):
-        # curses.echo()
-        # if curses.LINES < MIN_HEIGHT:
-        #   self.print(f"HEIGHT TOO SMALL ({curses.LINES})")
-        #   curses.napms(2000)
-        #   return False
-        # self.display.set_dealer(self.dealer)
-        # max_players = min(int(curses.COLS / MIN_PLAYER_WIDTH), MAX_PLAYERS)
-        # self.display.max_players = max_players
-        # self.display.set_state("starting")
-        # self.display.refresh()
-        # if int(curses.COLS / MIN_PLAYER_WIDTH) < MAX_PLAYERS:
-        #   self.print("*Screen too small**")
-        # p_count = 0
-        # key = None
-        # while(p_count != max_players and key != ord('s')):
-        #   key = self.screen.getch()
-        #   if key == ord('n'):
-        #       p_count += 1
-        #       new_player = Player(f"Player {p_count}", f"P{p_count}")
-        #       self.players.append(new_player)
-        #       self.display.add_player(new_player)
-        return True
-    def request(self, p_id, c_type='ch'):
+    def request(self, player, c_type='ch'):
+        if player.id == self.player.id:
+            if c_type == 'str':
+                if self.msg['type'] == 'ch':
+                    return self.screen.getch()
+                else:
+                    return self.screen.getstr()
+        p_id = player_id
         self.sio.emit('req', {'code': self.match_code, 'player_id':p_id, 'type':c_type})
-        self.requesting_from = p_id
-        while(self.msg is None or self.msg['player_id'] != p_id):
+        while(self.resp is None or self.msg['player_id'] != p_id):
             pass
-        ret = self.msg['data']
-        self.msg = None
+        ret = self.resp['data']
+        self.resp = None
         return ret
 
     def _betting(self):
@@ -170,7 +134,7 @@ class Game:
             self.render()
             while(not bet.isdigit() or int(bet) > player.money
                     or int(bet) < BET_MIN or int(bet) > BET_MAX):
-                bet = self.request(player.id, 'str')
+                bet = self.request(player, 'str')
                 self.change_state("betting_error")
             self.change_state("betting")
             player.make_bet(bet)
@@ -284,6 +248,65 @@ class Game:
             self.render()
             return True
         return False
+
+    def start(self):
+        # curses.echo()
+        # if curses.LINES < MIN_HEIGHT:
+        #   self.print(f"HEIGHT TOO SMALL ({curses.LINES})")
+        #   curses.napms(2000)
+        #   return False
+        # self.display.set_dealer(self.dealer)
+        # max_players = min(int(curses.COLS / MIN_PLAYER_WIDTH), MAX_PLAYERS)
+        # self.display.max_players = max_players
+        # self.display.set_state("starting")
+        # self.display.refresh()
+        # if int(curses.COLS / MIN_PLAYER_WIDTH) < MAX_PLAYERS:
+        #   self.print("*Screen too small**")
+        # p_count = 0
+        # key = None
+        # while(p_count != max_players and key != ord('s')):
+        #   key = self.screen.getch()
+        #   if key == ord('n'):
+        #       p_count += 1
+        #       new_player = Player(f"Player {p_count}", f"P{p_count}")
+        #       self.players.append(new_player)
+        #       self.display.add_player(new_player)
+        return True
+
+class PlayerInterface:
+
+    def __init__(self, stdscr, sio, match_code, player):
+        self.player = player
+        self.display = DisplayTable(stdscr)
+        self.screen = stdscr
+        self.delegate = BlackjackDelegate(self.handle_data)
+        self.game_update = None
+        self.req = None
+
+    def render(self, game_state):
+        game_state["players"] = [Player().populate(p) for p in game_state["players"]]
+        game_state["dealer"] = Dealer().populate(game_state["dealer"])
+        self.display.render(game_state)
+
+    def handle_data(self, event, data):
+        if event == "data":
+            self.game_update = data
+        elif event == "req" and data["player_id"] == self.player.id:
+            self.req = data
+
+    def run(self):
+        while(True):
+            if self.game_update is not None:
+                self.render(self.game_update)
+                self.game_update = None
+            if self.req is not None:
+                if self.msg['type'] == 'ch':
+                    inp = self.screen.getch()
+                else:
+                    inp = self.screen.getstr()
+                self.sio.emit('resp', {'code': self.match_code, 'player_id':self.player.id, 'data':inp})
+                self.req = None
+
 
 
 def main(stdscr):

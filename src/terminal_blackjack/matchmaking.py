@@ -1,6 +1,6 @@
 from networking import sio
 from .src.constants import *
-from .game import Game
+from .game import Game, PlayerInterface
 from .src.objects import Player
 from .src.display_util import DisplayTable, PartitionManager
 import curses, sys, uuid
@@ -17,18 +17,23 @@ class Matchmaking:
     def __init__(self, stdscr, sio, match_code=None):
         self.sio = sio
         self.display = DisplayTable(stdscr)
+        self.display.render()
         self.screen = stdscr
         self.H = curses.LINES
         self.W = curses.COLS
 
         self.players = []
-        self.player_wind = stdscr.derwin(self.H // 2, self.W, self.H // 2, 0)
-        self.player_wind.box()
+        # self.player_wind = stdscr.derwin(self.H // 2, self.W, self.H // 2, 0)
+        # self.player_wind.box()
 
         self.player_winds = {}
-        self.add_player(Player(True, player_num=1))
 
         self.host = match_code is None
+
+        if match_code is None:
+            self.player = Player(True, player_num=1)
+            self.add_player(self.player)
+
         self.match_code = match_code
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
@@ -47,28 +52,34 @@ class Matchmaking:
             self.sio.emit("match", {"code": self.match_code, "status": "join_match", "size":(self.screen.getmaxyx())})
 
         self.refresh()
+        self.display.draw_players()
 
     def on_receive_data(self, event, data):
         if event == "match" and data["code"] == self.match_code:
             if data["status"] == "join_match":
                 assert self.host
-                self.add_player(Player(False))
+                self.add_player(Player(False,player_num=len(self.players)+1))
                 self.refresh()
+                # self.display.draw_players()
 
                 self.sio.emit("match", {
                     "code": self.match_code,
                     "status": "players",
-                    "players": [i for i, _ in enumerate([p.serialize() for p in self.players])]
+                    "players": [(i,p) for i, p in enumerate([p.serialize() for p in self.players])]
                 })
                 self.match_size_x = min(self.match_size_x, data["size"][1])
                 self.match_size_y = min(self.match_size_y, data["size"][0])
             elif data["status"] == "players":
                 assert not self.host
-                self.players = [Player(False).populate(p) for p in data["players"]]
+                open("log1.txt","w").write(str(data["players"]))
+                self.players = [Player(False, player_num=i).populate(p) for i,p in data["players"]]
+                self.display.add_players_from_list(self.players)
                 self.refresh()
             elif data["status"] == "start":
                 assert not self.host
                 self.finished = True
+                self.screen.addstr(1,1,"HHEHEHEh")
+                self.screen.refresh()
 
     def refresh(self):
         if self.finished:
@@ -76,10 +87,10 @@ class Matchmaking:
 
         h, w = self.screen.getmaxyx()
 
-        self.player_wind.clear()
-        self.player_wind.box()
-        self.player_wind.refresh()
-        self.display.draw_players()
+        # self.player_wind.clear()
+        # self.player_wind.box()
+        # self.player_wind.refresh()
+        # self.display.draw_players()
 
         if self.host:
             text = "Press (s) to start!"
@@ -98,6 +109,7 @@ class Matchmaking:
             return
         self.players.append(player)
         self.display.add_player(player)
+        
 
 
     # def display_player(self, i):
@@ -129,8 +141,14 @@ class Matchmaking:
         while not self.finished:
             self.handle_input(self.screen.getch())
             curses.napms(100)
-        game = Game(self.screen, self.sio, self.host, self.match_code)
-        game.run()
+        if self.host:
+            game = Game(self.screen, self.sio, self.host, self.match_code, self.player)
+            game.display = self.display
+            game.run()
+        for p in self.players:
+            
+        else:
+
 
 
 def main(stdscr, match_code=None):
@@ -140,5 +158,4 @@ def main(stdscr, match_code=None):
 
 if __name__ == '__main__':
     stdscr = curses.initscr()
-    stdscr.nodelay(True)
     curses.wrapper(main)

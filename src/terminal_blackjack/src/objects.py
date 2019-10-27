@@ -9,7 +9,7 @@ class Card:
 				SUIT.H.value: "\u2665",
 				SUIT.C.value: "\u2663"}
 
-	def __init__(self, suit, num, facedown=False):
+	def __init__(self, suit=SUIT.D, num=2, facedown=False):
 		self.suit = suit.value
 		self.symbol = self.suit_chars[self.suit]
 		self.num = str(num)
@@ -28,12 +28,12 @@ class Card:
 		return self
 
 class Player:
-	def __init__(self, host, name=None, player_num=None):
+	def __init__(self, host, player_num=None, name=None):
 		self.name = name if name is not None else f"Player {player_num}"
 		self.id = int(uuid4())
 		self.money = STARTING_MONEY
 		self.cards = []
-		self.color = eval(f"COLOR.P{player_num}").value
+		self.color = eval(f"COLOR.P{player_num}").value if player_num else None
 		self.symbol = chr(randint(33,126))
 		self.avatar_size = 5
 		self.avatar = [(randint(0,self.avatar_size-1), randint(0,self.avatar_size-1)) for i in range(20)]
@@ -103,12 +103,12 @@ class Player:
 		for k,v in dict.items():
 			if k != 'cards':
 				setattr(self, k, v)
-		self.cards = [c.populate() for c in dict['cards']]
+		self.cards = [Card().populate(c) for c in dict['cards']]
 		return self
 
 class Dealer(Player):
 	def __init__(self, num_decks=NUM_DECKS):
-		super().__init__("Dealer","DEALER",1)
+		super().__init__("Dealer",1,"DEALER")
 		self.color = COLOR.DEALER.value
 		self.avatar = [[randint(0,9), randint(-1,4)] for i in range(45)]
 		self.deck = []
@@ -139,13 +139,10 @@ class Dealer(Player):
 		ret['cards'] = [c.serialize() for c in self.cards]
 		return ret
 
-	def populate(self, dict):
-		for k,v in dict.items():
-			setattr(self, k, v)
-		return self
-
 if __name__ == '__main__':
-	d = Card(SUIT.D, 8)
-	j = d.serialize()
-	print(json.dumps(j))
-	print(json.dumps(Player(player_num='P1').serialize()))
+	p = Player(True, 1)
+	print(p.id)
+	j = json.dumps(p.serialize())
+	f = json.loads(j)
+	p2 = Player(True, 1).populate(f)
+	print(p2.id)

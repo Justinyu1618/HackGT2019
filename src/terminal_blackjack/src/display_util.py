@@ -101,7 +101,7 @@ class DisplayTable:
 		self.W = curses.COLS - 1
 		self.dealer_wind = stdscr.derwin(int(self.H/2-1), self.W, 0, 0)
 		self.dealer_wind.box()
-		self.player_wind = stdscr.derwin(int(self.H/2), self.W, int(self.H/2+1), 0)	
+		self.player_wind = stdscr.derwin(int(self.H/2-1), self.W, int(self.H/2+1), 0)	
 		# self.player_wind.immedok(True)
 		self.players = set()
 
@@ -113,13 +113,16 @@ class DisplayTable:
 		self.printed_msg = None
 		self.max_players = None
 	
-	def render(self, game_state):
-		players, self.dealer = game_state['players'], game_state['dealer']
-		self.state, self.turn = game_state['state'], game_state['turn']
+	def render(self, game_state=None):
+		if game_state is not None:
+			players, self.dealer = game_state['players'], game_state['dealer']
+			self.state, self.turn = game_state['state'], game_state['turn']
+		if self.dealer_partition is None:
+			self.dealer_partition = PlayerPartition(0, 0, int(self.W/2)-1, int(self.H/2)-1)
 
 		self.dealer_wind.clear()
 		self.dealer_wind.box()
-		# self.draw_dealer()
+		self.draw_dealer()
 		if self.state == "starting":
 			self.draw_starting_screen()			
 		if self.state == "betting":
@@ -155,8 +158,13 @@ class DisplayTable:
 	def add_player(self, player):
 		self.partitions.add_player(player.id)
 		self.players.add(player)
+		self.render()
 		self.draw_player(player, self.player_wind)
 
+	def add_players_from_list(self, p_list):
+		self.partitions.restart()
+		for p in p_list:
+			self.add_player(p)
 
 	def remove_player(self, player):
 		self.players.remove(player)
@@ -167,8 +175,12 @@ class DisplayTable:
 		self.dealer_partition = PlayerPartition(0, 0, int(self.W/2)-1, int(self.H/2)-1)
 
 	def draw_players(self):
+		self.player_wind.clear()
+		self.player_wind.box()
 		for p in self.players:
 			self.draw_player(p, self.player_wind)
+		self.player_wind.refresh()
+
 	def draw_player(self, player, window, coords=None):
 		coords = self.partitions.get_coords(player) if not coords else coords
 		open("log.txt","w").write(str(coords))
@@ -179,7 +191,6 @@ class DisplayTable:
 		for i in range(len(player.cards)):
 			self.draw_card(player.cards[i], window, coords['cards'][i])
 		self.draw_boundary(window, coords['bounds'])
-		window.refresh()
 
 	def draw_dealer(self):
 		if not self.dealer:
