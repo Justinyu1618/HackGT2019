@@ -125,7 +125,7 @@ def read_handler(socket, buf):
             logging.error("message must be json serialized")
 
         # handle callback functions
-        if data_callback is not None:
+        if recv_data_callback is not None:
             event = message["event"]
             data = message["data"]
             recv_data_callback(event, data)
