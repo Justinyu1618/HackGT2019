@@ -145,7 +145,7 @@ class Matchmaking:
 
         display_avatar( self.screen, avatar = avatar1, color = 1, num_players = 1, player = 1, positions = AVATAR_X_POSITIONS, sh = sh, motion = motion)
         
-        while not self.finished:
+        while 1:
             add_msg = f'More players can join! ({len(self.players)}/4)'
             if len(self.players) < 4:
                 self.screen.addstr(sh//2 + 3, sw//2 - len(add_msg)//2, add_msg)
@@ -187,6 +187,14 @@ class Matchmaking:
             curses.napms(150)
             self.screen.refresh()
 
-        game = Game(self.screen, self.sio, self.host, self.match_code,
-                self.sid, self.players, (self.match_size_x, self.match_size_y))
-        game.run()
+            if self.finished:
+                self.screen.erase()
+                game = Game(self.screen, self.sio, self.host, self.match_code,
+                        self.sid, self.players, (self.match_size_x, self.match_size_y))
+                game.run()
+                self.screen.erase()
+                self.sio.update_callbacks(self.on_connect, self.on_receive_data)
+                self.finished = False
+                break
+
+        self.run()
