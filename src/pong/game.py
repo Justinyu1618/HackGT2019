@@ -1,12 +1,13 @@
-import curses
 import time
+import curses
 
+from src.networking.btio import *
 from .objects import Ball, Paddle, Score
 
 FREQ = 33   
 
 class Game():
-    def __init__(self, window, sio, host, match_code, size=None):
+    def __init__(self, window, btio, host, match_code, size=None):
         window.clear()
         window.refresh()
         bounding_wind = window.derwin(size[1], size[0],0,0)
@@ -32,7 +33,7 @@ class Game():
         self.score = Score(1, 1, "Score: 0:0")
         self.host = host
         self.opponent_data = None
-        self.sio = sio
+        self.btio = btio
 
     def update(self, keys1, keys2):
         hit_edge = self.ball.update(self.window, [self.paddle1, self.paddle2])
@@ -59,7 +60,7 @@ class Game():
 
     def run(self):
         self.window.clear()
-        self.sio.update_callbacks(recv=self.data_received)
+        update_callbacks(recv=self.data_received)
         timestep = 0
 
         keys_event = {}
@@ -78,7 +79,7 @@ class Game():
                     self.opponent_data = None
                 game_state = self.update(keys, op_keys)
                 self.render(game_state)
-                self.sio.emit('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
+                self.btio.write('data', {'code': self.match_code, 'state':{k:v.serialize() for k,v in game_state.items()}, 'timestep':timestep})
             else:
                 if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
                     self.render(self.opponent_data['state'], unserialize=True)
@@ -91,7 +92,7 @@ class Game():
                     }
 
                 if timestep % 33 == 0 and keys_event is not None:
-                    self.sio.emit('data', keys_event)
+                    self.btio.write('data', keys_event)
                     keys_event = None
 
             curses.flushinp()

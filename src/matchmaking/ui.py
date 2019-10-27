@@ -1,14 +1,17 @@
-from networking import sio
+import sys
+import uuid
+import curses
 
-from src.tron.game import Game
-import curses, sys, uuid
-
+from src.pong.game import Game
+from src.networking.btio import *
 from src.landing_art.pong.pong_host import *
 
+
 MAX_PLAYERS = 4
+NAME = "rinik-T450s"
+
 
 class Player:
-
     def __init__(self, sid, host):
         self.sid = sid
         self.host = host
@@ -20,17 +23,15 @@ class Player:
         for k, v in dict.items():
             setattr(self, k, v)
 
-class Matchmaking:
 
-    def __init__(self, stdscr, sio, match_code=None):
+class Matchmaking:
+    def __init__(self, stdscr, btio, match_code=None):
         if match_code is None:
             self.match_code = str(uuid.uuid4())[:4]
             self.host = True
         else:
             self.match_code = match_code
             self.host = False
-
-        self.sio = sio
 
         self.screen = stdscr
         self.H = curses.LINES
@@ -39,17 +40,21 @@ class Matchmaking:
         self.players = []
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
-
-        self.sio.start(self.on_connect, self.on_receive_data)
+        
+        if match_code:
+            btio = start("CLIENT", conn=self.on_connect, recv=self.on_receive_data, name=NAME)
+        else:
+            btio = start("SERVER", conn=self.on_connect, recv=self.on_receive_data) 
+        self.btio = btio
 
         self.finished = False
         self.sid = None
 
     def on_connect(self):
         if self.host:
-            self.sio.emit("match", {"code": self.match_code, "status": "new_match"})
+            self.btio.write("match", {"code": self.match_code, "status": "new_match"})
         else:
-            self.sio.emit("match", {"code": self.match_code, "status": "join_match", "size": (self.screen.getmaxyx())})
+            self.btio.write("match", {"code": self.match_code, "status": "join_match", "size": (self.screen.getmaxyx())})
 
     def on_receive_data(self, event, data):
         if event == "info":
@@ -60,7 +65,7 @@ class Matchmaking:
                 assert self.host
                 self.add_player(Player(data["sid"], False))
 
-                self.sio.emit("match", {
+                self.btio.write("match", {
                     "code": self.match_code,
                     "status": "players",
                     "players": [x.serialize() for x in self.players]
@@ -88,7 +93,7 @@ class Matchmaking:
 
     def handle_input(self, char):
         if char == ord("s") and self.host:
-            self.sio.emit("match", {"code": self.match_code, "status": "start"})
+            self.btio.write("match", {"code": self.match_code, "status": "start"})
             self.finished = True
 
     def run(self):
@@ -190,11 +195,11 @@ class Matchmaking:
 
             if self.finished:
                 self.screen.erase()
-                game = Game(self.screen, self.sio, self.host, self.match_code,
+                game = Game(self.screen, self.btio, self.host, self.match_code,
                         self.sid, self.players, (self.match_size_x, self.match_size_y))
                 game.run()
                 self.screen.erase()
-                self.sio.update_callbacks(self.on_connect, self.on_receive_data)
+                update_callbacks(self.on_connect, self.on_receive_data)
                 self.finished = False
                 break
 
