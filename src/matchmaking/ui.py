@@ -3,7 +3,7 @@ from networking import sio
 from src.tron.game import Game
 import curses, sys, uuid
 
-from src.landing_art.pong_host import *
+from src.landing_art.pong.pong_host import *
 
 MAX_PLAYERS = 4
 
