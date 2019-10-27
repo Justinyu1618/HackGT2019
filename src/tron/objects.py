@@ -30,7 +30,7 @@ class Car:
 
     def draw(self, window):
         window.attron(curses.color_pair(self.player))
-        window.addch(self.y, self.x, "%")
+        #window.addch(self.y, self.x, "%")
         window.attroff(curses.color_pair(self.player))
 
     def serialize(self):

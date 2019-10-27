@@ -30,10 +30,10 @@ def received_match(data):
     if received_data_callback is not None:
         received_data_callback("match", data)
 
-@sio.event
-def disconnect():
+@sio.on("dced")
+def disconnect(data):
     if disconnected_callback is not None:
-        disconnected_callback()
+        disconnected_callback(data["sid"])
 
 def start_server():
     sio.connect("http://{}:{}".format(SOCKETIO_IP, SOCKETIO_PORT))

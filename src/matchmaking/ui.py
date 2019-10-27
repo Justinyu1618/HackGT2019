@@ -40,7 +40,7 @@ class Matchmaking:
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
 
-        self.sio.start(self.on_connect, self.on_receive_data)
+        self.sio.start(self.on_connect, self.on_receive_data, self.on_disconnect)
 
         self.finished = False
         self.sid = None
@@ -79,6 +79,9 @@ class Matchmaking:
             elif data["status"] == "start":
                 assert not self.host
                 self.finished = True
+
+    def on_disconnect(self, sid):
+        assert 0
 
     def add_player(self, player):
         if len(self.players) >= MAX_PLAYERS:
@@ -194,7 +197,8 @@ class Matchmaking:
                         self.sid, self.players, (self.match_size_x, self.match_size_y))
                 game.run()
                 self.screen.erase()
-                self.sio.update_callbacks(self.on_connect, self.on_receive_data)
+                self.sio.update_callbacks(self.on_connect, self.on_receive_data,
+                        self.on_disconnect)
                 self.finished = False
                 break
 
