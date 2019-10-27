@@ -101,6 +101,9 @@ class Game:
     def render(self, game_state, unserialize=False):
         if not self.host:
             for car in self.cars:
+                if car.dead:
+                    continue
+
                 self.window.addch(car.y, car.x, "+")
 
         if unserialize:
