@@ -41,11 +41,15 @@ class Game:
         self.host = host
         self.opponent_data = {}
         self.sio = sio
-        self.game_over = False
+        self.paused = False
         self.finished = False
+        self.first_pause = False
 
     def set_finished(self):
         self.finished = True
+
+    def unpause(self):
+        self.paused = False
 
     def display_winner(self, sid):
         h, w = self.window.getmaxyx()
@@ -60,13 +64,13 @@ class Game:
 
         self.window.addstr(h // 2, (w - len(line2)) // 2 - 1, line2)
 
-        self.game_over = True
+        self.paused = True
 
         t = Timer(3, self.set_finished)
         t.start()
 
     def update(self, keys):
-        if self.finished or self.game_over:
+        if self.finished or self.paused:
             return None
 
         for i in range(len(self.players)):
@@ -77,10 +81,28 @@ class Game:
                 keys[self.players[i].sid] = {}
 
             self.window.attron(curses.color_pair(i + 1))
-            self.window.addch(self.cars[i].y, self.cars[i].x, "+")
-            self.window.attroff(curses.color_pair(i + 1))
+            x, y, d = self.cars[i].x, self.cars[i].y, self.cars[i].direction
+            if self.cars[i].direction == 0 or self.cars[i].direction == 2:
+                self.window.addch(y, x, "║")
+            else:
+                self.window.addch(y, x, "═")
 
             self.cars[i].update(self.window, keys[self.players[i].sid])
+
+            if (self.cars[i].direction == 1 and d == 0) or \
+                    (self.cars[i].direction == 2 and d == 3):
+                self.window.addch(y, x, "╔")
+            elif (self.cars[i].direction == 1 and d == 2) or \
+                    (self.cars[i].direction == 0 and d == 3):
+                self.window.addch(y, x, "╚")
+            elif (self.cars[i].direction == 3 and d == 0) or \
+                    (self.cars[i].direction == 2 and d == 1):
+                self.window.addch(y, x, "╗")
+            elif (self.cars[i].direction == 3 and d == 2) or \
+                    (self.cars[i].direction == 0 and d == 1):
+                self.window.addch(y, x, "╝")
+
+            self.window.attroff(curses.color_pair(i + 1))
 
         h, w = self.window.getmaxyx()
         num_dead = 0
@@ -108,7 +130,7 @@ class Game:
         return {"cars": self.cars}
     
     def render(self, game_state, unserialize=False):
-        if self.game_over:
+        if self.paused:
             return
 
         if not self.host:
@@ -117,14 +139,19 @@ class Game:
                     continue
 
                 self.window.attron(curses.color_pair(i + 1))
-                self.window.addch(car.y, car.x, "+")
+
+                if car.direction == 0 or car.direction == 2:
+                    self.window.addch(car.y, car.x, "║")
+                else:
+                    self.window.addch(car.y, car.x, "═")
+
                 self.window.attroff(curses.color_pair(i + 1))
 
         if unserialize:
             cars = game_state["cars"]
             [self.cars[i].populate(cars[i]) for i in range(len(cars))]
             
-            for o in self.cars:
+            for i, o in enumerate(self.cars):
                 if o.dead:
                     continue
 
@@ -182,14 +209,19 @@ class Game:
                         'state':{k: [x.serialize() for x in v] for k,v in game_state.items()},
                         'timestep':timestep
                     })
+
+                if not self.first_pause:
+                    self.paused = True
+                    self.first_pause = True
+
+                    t = Timer(2, self.unpause)
+                    t.start()
             else:
                 for key in self.opponent_data:
                     self.render(self.opponent_data[key]["state"],
                             unserialize=True)
+
                 self.opponent_data = {}
-                #if self.opponent_data and 'state' in self.opponent_data:# and 'timestep' in self.opponent_data and self.opponent_data['timestep'] > timestep:
-                #    self.render(self.opponent_data['state'], unserialize=True)
-                #    self.opponent_data = None
 
                 if len(keys) > 0:
                     keys_event = {
