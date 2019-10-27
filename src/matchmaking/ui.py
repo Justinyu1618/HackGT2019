@@ -1,7 +1,6 @@
 from networking import sio
-from networking.delegate import NetworkingDelegate
 
-from src.pong.game import Game
+from src.tron.game import Game
 import curses, sys, uuid
 
 MAX_PLAYERS = 4
@@ -10,22 +9,6 @@ class Player:
 
     def __init__(self, host):
         self.host = host
-
-class MatchmakingDelegate(NetworkingDelegate):
-
-    def __init__(self, connected, data):
-        self.connected = connected
-        self.received_data = data
-
-    def connected(self):
-        pass
-
-    def received_data(self, event, data):
-        if event == "match":
-            pass
-
-    def disconnected(self):
-        pass
 
 class Matchmaking:
 
@@ -48,8 +31,7 @@ class Matchmaking:
 
         self.match_size_y, self.match_size_x = self.screen.getmaxyx()
 
-        delegate = MatchmakingDelegate(self.on_connect, self.on_receive_data)
-        self.sio.start(delegate)
+        self.sio.start(self.on_connect, self.on_receive_data)
 
         self.finished = False
 
